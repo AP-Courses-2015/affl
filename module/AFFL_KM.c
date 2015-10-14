@@ -22,11 +22,16 @@
 #include <linux/delay.h>
 #include <linux/timer.h>
 #include "AFFL_list.h"
+#include "AFFL_errors.h"
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("firewall");
 
 //+++++++++++++++++++++++++++++++++++++++++++++++
+//===============================================
+
+static int err = ENO_ERROR;
+
 //===============================================
 
 static int changeSysCalls(void);
@@ -37,21 +42,46 @@ static int stopTimer(void);
 //================================================
 
 static int __init mod_init(void)
-{
-  initBlackList();
-  changeSysCalls();
-  startTimer();
+{  
+  if (err = initBlackList())
+  {
+    printk(KERN_ALERT "error (%i): can't init blacklist\n", err);
+    return err; 
+  }
   
-  return 0;
+  if (err = changeSysCalls())
+  {
+    printk(KERN_ALERT "error (%i): can't change system call\n", err);
+    return err;
+  }
+  
+  if (err = startTimer())
+  {
+    printk(KERN_ALERT "error (%i): can't startup timer\n", err);
+    return err;
+  }
+  
+  return ENO_ERROR;
 }
 
 //================================================
 
 static void __exit mod_exit(void)
 {
-  releaseBlackList();
-  returnSysCalls();
-  stopTimer();  
+  if (err = releaseBlackList())
+  {
+    printk(KERN_ALERT "error (%i): can't release blacklist\n", err);
+  }
+    
+  if (err = returnSysCalls())
+  {
+    printk(KERN_ALERT "error (%i): can't return system call back\n", err);
+  }
+  
+  while(err = stopTimer())
+  {
+    printk(KERN_ALERT "error (%i): can't stop timer\n", err);
+  }
 }
 
 //================================================
@@ -76,7 +106,7 @@ static struct timer_list timer;
 //================================================
 
 static unsigned long **findSysCallTable(void);
-static void changeMemMode(unsigned long **table, TMemMode mode);
+static int changeMemMode(unsigned long **table, TMemMode mode);
 
 static asmlinkage long fakeExecve(const char __user *filename,
 				  const char __user *const __user *argv,
@@ -90,38 +120,90 @@ static void timerFunc(unsigned long data);
 
 //=================================================
 
-void changeSysCalls(void)
+int changeSysCalls(void)
 {
-  sys_call_table = findSysCallTable();
+  if ((sys_call_table = findSysCallTable()) == NULL)
+  {
+    err = -ESYS_CALLS_TABLE_FIND;
+    printk(KERN_ALERT "error (%i): can't find system calls table\n", err);
+    
+    return err;
+  }
   
-  changeMemMode(sys_call_table, MODE_RW);
+  if (err = changeMemMode(sys_call_table, MODE_RW))
+  {
+    printk(KERN_ALERT "error (%i): can't set memory RW\n", err);
+    
+    return err;
+  }
+   
     sysExecve = sys_call_table[__NR_execve];
     sys_call_table[__NR_execve] = fakeExecve;
-  changeMemMode(sys_call_table, MODE_RO);
+    
+  if (err = changeMemMode(sys_call_table, MODE_RO))
+  {
+    printk(KERN_ALERT "error (%i): can't set memory RO\n", err);
+    
+    return err;
+  }
+  
+  return ENO_ERROR;
 }
 
 //=================================================
 
-void returnSysCalls(void)
+int returnSysCalls(void)
 {
-  changeMemMode(sys_call_table, MODE_RW);
+  if (err = changeMemMode(sys_call_table, MODE_RW))
+  {
+    printk(KERN_ALERT "error (%i): can't set memory RW. Restart your computer\n", err);
+    
+    return err;
+  }
+  
     sys_call_table[__NR_execve] = sysExecve;
-  changeMemMode(sys_call_table, MODE_RO);
+    
+  if (err = changeMemMode(sys_call_table, MODE_RO))
+  {
+    printk(KERN_ALERT "error (%i): can't set memory RO\n", err);
+    
+    return err;
+  }
+  
+  return ENO_ERROR;
 }
 
 //================================================
 
-void startTimer(void)
+int startTimer(void)
 {
   setup_timer(&timer, timerFunc, 0);
-  mod_timer(&timer, jiffies + msec_to_jiffies(1000));
+  if (err = mod_timer(&timer, jiffies + msec_to_jiffies(1000)))
+  {
+    printk(KERN_ALERT "error (%i): can't mod timer\n", err);
+    
+    err = -ETIMER_MOD;
+    
+    return err;
+  }
+  
+  return ENO_ERROR;
 }
 
 //=================================================
 
-void stopTimer(void)
+int stopTimer(void)
 {
-  del_timer(&timer);
+  if (err = del_timer(&timer))
+  {
+    printk(KERN_ALERT "error (%i): can't delete timer\n", err);
+ 
+    err = -ETIMER_DEL;
+    
+    return err;
+  }
+  
+  return ENO_ERROR;
 }
 
 //---------------------------------------------------
@@ -149,15 +231,24 @@ unsigned long **findSysCallTable(void)
 
 //====================================================
 
-void changeMemMode(unsigned long **table, TMemMode mode)
+int changeMemMode(unsigned long **table, TMemMode mode)
 {
   unsigned int l;
   pte_t *pte;
-  pte = lookup_address((long unsigned int)table, &l);
+  if (!(pte = lookup_address((long unsigned int)table, &l)))
+  {
+    err = -ENO_PTE;
+    printk(KERN_ALERT "error (%i): can't take pte from system calls table\n", err);
+    
+    return err;
+  }
+  
   if (mode == MODE_RW)
     pte->pte |= _PAGE_RW;
   else
     pte->pte &= ~_PAGE_RW;
+  
+  return ENO_ERROR;
 }
 
 //====================================================
@@ -176,8 +267,17 @@ asmlinkage long fakeExecve(const char __user *filename,
 
 void timerFunc(unsigned long data)
 {
-  refreshBlackList();
-  mod_timer(&timer, jiffies + msec_to_jiffies(1000));
+  if (err = refreshBlackList())
+  {
+    printk(KERN_ALERT "error (%i): can't refresh blacklist\n", err);
+  }
+  
+  if (err = mod_timer(&timer, jiffies + msec_to_jiffies(1000)))
+  {
+    printk(KERN_ALERT "error (%i): can't mod timer\n", err);
+    
+    err = -ETIMER_MOD;
+  }
 }
 
 //------------------------------------------------------
