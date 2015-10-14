@@ -106,7 +106,7 @@ unsigned long **findSysCallTable(void)
 
 //====================================================
 
-static void changeMemMode(unsigned long **table, TMemMode mode)
+void changeMemMode(unsigned long **table, TMemMode mode)
 {
   unsigned int l;
   pte_t *pte;
@@ -115,4 +115,16 @@ static void changeMemMode(unsigned long **table, TMemMode mode)
     pte->pte |= _PAGE_RW;
   else
     pte->pte &= ~_PAGE_RW;
+}
+
+//====================================================
+
+asmlinkage long fakeExecve(const char __user *filename,
+			   const char __user *const __user *argv,
+			   const char __user *const __user *envp)
+{
+  if (findProcInBlackList(filename))
+    return 0;
+  
+  return sysExecve(filename, argv, envp);
 }
