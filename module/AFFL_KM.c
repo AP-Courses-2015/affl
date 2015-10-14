@@ -1,17 +1,38 @@
+/*Модуль ядра для блокирования запуска процессов из черного списка.
+ *Подменяется системный вызов sys_execve(), который порождает процессы.
+ *Функции работы с черным списком:
+ * initBlackList()		(инициализирует список)
+ * refreshBlackList()		(обновляет список по таймеру (раз в 1 секунду)
+ * findProcInBlackList()	(ищет имя процесса в черном списке.
+ * 				 Если процесс не найден - возвращает 0)
+ * releaseBlackList()		(освобождает список)
+
+/*Ряд символов "+" - начало блока, ряд символов "-" - конец блока.
+ *Ряд символов "=" - простой разделитель.
+ * 
+ *Глобальные для блока объявления располагаются в начале,
+ * после объявлений идет определение функций,
+ * которые были объявлены в предыдущем блоке.
+*/
+
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/syscalls.h>
 #include <linux/delay.h>
+#include <linux/timer.h>
 #include "AFFL_list.h"
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("firewall");
 
+//+++++++++++++++++++++++++++++++++++++++++++++++
 //===============================================
 
-static int changeSysCalls();
-static int returnSysCalls();
+static int changeSysCalls(void);
+static int returnSysCalls(void);
+static int startTimer(void);
+static int stopTimer(void);
 
 //================================================
 
@@ -19,6 +40,7 @@ static int __init mod_init(void)
 {
   initBlackList();
   changeSysCalls();
+  startTimer();
   
   return 0;
 }
@@ -29,6 +51,7 @@ static void __exit mod_exit(void)
 {
   releaseBlackList();
   returnSysCalls();
+  stopTimer();  
 }
 
 //================================================
@@ -36,7 +59,8 @@ static void __exit mod_exit(void)
 module_init(mod_init);
 modult_exit(mod_exit);
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++
+//------------------------------------------------
+//++++++++++++++++++++++++++++++++++++++++++++++++
 
 typedef enum
 {
@@ -44,11 +68,12 @@ typedef enum
   MODE_RO
 }TMemMode;
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++
+//================================================
 
 static unsigned long **sys_call_table;
+static struct timer_list timer;
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++
+//================================================
 
 static unsigned long **findSysCallTable(void);
 static void changeMemMode(unsigned long **table, TMemMode mode);
@@ -60,6 +85,8 @@ static asmlinkage long fakeExecve(const char __user *filename,
 static asmlinkage long (*sysExecve)(const char __user *filename,
 				    const char __user *const __user *argv,
 				    const char __user *const __user *envp);
+
+static void timerFunc(unsigned long data);
 
 //=================================================
 
@@ -82,7 +109,23 @@ void returnSysCalls(void)
   changeMemMode(sys_call_table, MODE_RO);
 }
 
+//================================================
+
+void startTimer(void)
+{
+  setup_timer(&timer, timerFunc, 0);
+  mod_timer(&timer, jiffies + msec_to_jiffies(1000));
+}
+
 //=================================================
+
+void stopTimer(void)
+{
+  del_timer(&timer);
+}
+
+//---------------------------------------------------
+//+++++++++++++++++++++++++++++++++++++++++++++++++++
 
 unsigned long **findSysCallTable(void)
 {
@@ -128,3 +171,13 @@ asmlinkage long fakeExecve(const char __user *filename,
   
   return sysExecve(filename, argv, envp);
 }
+
+//=====================================================
+
+void timerFunc(unsigned long data)
+{
+  refreshBlackList();
+  mod_timer(&timer, jiffies + msec_to_jiffies(1000));
+}
+
+//------------------------------------------------------
