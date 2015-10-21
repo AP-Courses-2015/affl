@@ -4,3 +4,4 @@
 #define ETIMER_MOD		3
 #define ETIMER_DEL		4
 #define ENO_PTE			5
+#define ESTUB_PATCH		6

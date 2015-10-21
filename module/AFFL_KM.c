@@ -1,5 +1,8 @@
 /*Модуль ядра для блокирования запуска процессов из черного списка.
  *Подменяется системный вызов sys_execve(), который порождает процессы.
+ *Т.к. sys_call_table[__NR_execve] указывает не на sys_execve(), а на stub_execve(),
+ *подменяется агумент инструкции call в stub_execve(), которая вызывает sys_execve().
+ * 
  *Функции работы с черным списком:
  * initBlackList()		(инициализирует список)
  * refreshBlackList()		(обновляет список по таймеру (раз в 1 секунду)
@@ -34,8 +37,8 @@ static int err = ENO_ERROR;
 
 //===============================================
 
-static int changeSysCalls(void);
-static int returnSysCalls(void);
+static int changeSysCall(void);
+static int returnSysCall(void);
 static int startTimer(void);
 static int stopTimer(void);
 
@@ -49,7 +52,7 @@ static int __init mod_init(void)
     return err; 
   }
   
-  if (err = changeSysCalls())
+  if (err = changeSysCall())
   {
     printk(KERN_ALERT "error (%i): can't change system call\n", err);
     return err;
@@ -73,7 +76,7 @@ static void __exit mod_exit(void)
     printk(KERN_ALERT "error (%i): can't release blacklist\n", err);
   }
     
-  if (err = returnSysCalls())
+  if (err = returnSysCall())
   {
     printk(KERN_ALERT "error (%i): can't return system call back\n", err);
   }
@@ -87,7 +90,7 @@ static void __exit mod_exit(void)
 //================================================
 
 module_init(mod_init);
-modult_exit(mod_exit);
+module_exit(mod_exit);
 
 //------------------------------------------------
 //++++++++++++++++++++++++++++++++++++++++++++++++
@@ -103,10 +106,15 @@ typedef enum
 static unsigned long **sys_call_table;
 static struct timer_list timer;
 
+//Адрес агрумента call (адреса sys_execve), который находится в stub_execve
+static unsigned long addr_call_arg;
+
 //================================================
 
 static unsigned long **findSysCallTable(void);
 static int changeMemMode(unsigned long **table, TMemMode mode);
+static int patchStubExecve(void);
+static int unpatchStubExecve(void);
 
 static asmlinkage long fakeExecve(const char __user *filename,
 				  const char __user *const __user *argv,
@@ -120,31 +128,25 @@ static void timerFunc(unsigned long data);
 
 //=================================================
 
-int changeSysCalls(void)
+int changeSysCall(void)
 {
-  if ((sys_call_table = findSysCallTable()) == NULL)
-  {
-    err = -ESYS_CALLS_TABLE_FIND;
-    printk(KERN_ALERT "error (%i): can't find system calls table\n", err);
-    
-    return err;
-  }
+  if ((sys_call_table = findSysCallTable()) == NULL)    
+    return -ESYS_CALLS_TABLE_FIND;
   
-  if (err = changeMemMode(sys_call_table, MODE_RW))
+  if (err = changeMemMode(sys_call_table[__NR_execve], MODE_RW))
   {
     printk(KERN_ALERT "error (%i): can't set memory RW\n", err);
     
-    return err;
+    return -ESET_MEM_MOD;
   }
    
-    sysExecve = sys_call_table[__NR_execve];
-    sys_call_table[__NR_execve] = fakeExecve;
+    patchStubExecve();
     
-  if (err = changeMemMode(sys_call_table, MODE_RO))
+  if (err = changeMemMode(sys_call_table[__NR_execve], MODE_RO))
   {
     printk(KERN_ALERT "error (%i): can't set memory RO\n", err);
     
-    return err;
+    return -ESET_MEM_MOD;
   }
   
   return ENO_ERROR;
@@ -152,22 +154,22 @@ int changeSysCalls(void)
 
 //=================================================
 
-int returnSysCalls(void)
+int returnSysCall(void)
 {
-  if (err = changeMemMode(sys_call_table, MODE_RW))
+  if (err = changeMemMode(sys_call_table[__NR_execve], MODE_RW))
   {
     printk(KERN_ALERT "error (%i): can't set memory RW. Restart your computer\n", err);
     
-    return err;
+    return -ESET_MEM_MOD;
   }
   
-    sys_call_table[__NR_execve] = sysExecve;
+    unpatchStubExecve();
     
-  if (err = changeMemMode(sys_call_table, MODE_RO))
+  if (err = changeMemMode(sys_call_table[__NR_execve], MODE_RO))
   {
     printk(KERN_ALERT "error (%i): can't set memory RO\n", err);
     
-    return err;
+    return -ESET_MEM_MOD;
   }
   
   return ENO_ERROR;
@@ -215,8 +217,8 @@ unsigned long **findSysCallTable(void)
     unsigned long *p;
     
     for (ptr = (unsigned long)sys_close;
-	 prt < (unsigned long)&loops_per_jiffy;
-	 prt += sizeof(unsigned long))
+	 ptr < (unsigned long)&loops_per_jiffy;
+	 ptr += sizeof(unsigned long))
     {
       p = (unsigned long *)ptr;
       
@@ -237,10 +239,7 @@ int changeMemMode(unsigned long **table, TMemMode mode)
   pte_t *pte;
   if (!(pte = lookup_address((long unsigned int)table, &l)))
   {
-    err = -ENO_PTE;
-    printk(KERN_ALERT "error (%i): can't take pte from system calls table\n", err);
-    
-    return err;
+    return -ENO_PTE;
   }
   
   if (mode == MODE_RW)
@@ -250,6 +249,30 @@ int changeMemMode(unsigned long **table, TMemMode mode)
   
   return ENO_ERROR;
 }
+
+//====================================================
+
+int patchStubExecve()
+{
+  uint8_t *ptr = memchr(sys_call_table[__NR_execve], 0xE8, 200);
+  if (!ptr++)
+    return -ESTUB_PATCH;
+  
+  addr_call_arg = (unsigned long)ptr;
+    
+  sysExecve = (void *)((void *)addr_call_arg + 4 + *(int32_t *)addr_call_arg);
+  *((int32_t *)addr_call_arg) = (int32_t)((unsigned long)fakeExecve - addr_call_arg - 4);
+  
+  return NO_ERROR;
+}
+
+//====================================================
+
+void unpatchStubExecve()
+{
+  *((int32_t *)addr_call_arg) = (int32_t)((unsigned long)sysExecve - addr_call_arg - 4);
+}
+
 
 //====================================================
 
