@@ -25,16 +25,11 @@
 #include <linux/delay.h>
 #include <linux/timer.h>
 #include "AFFL_list.h"
-#include "AFFL_errors.h"
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("firewall");
 
 //+++++++++++++++++++++++++++++++++++++++++++++++
-//===============================================
-
-static int err = ENO_ERROR;
-
 //===============================================
 
 static int changeSysCall(void);
@@ -46,44 +41,44 @@ static int stopTimer(void);
 
 static int __init mod_init(void)
 {  
-  if (err = initBlackList())
+  if (initBlackList())
   {
-    printk(KERN_WARNING "AFFL error (%i): can't init blacklist\n", err);
-    return err; 
+    printk(KERN_WARNING "AFFL error: can't init blacklist\n");
+    return -1; 
   }
   
-  if (err = changeSysCall())
+  if (changeSysCall())
   {
-    printk(KERN_WARNING "AFFL error (%i): can't change system call\n", err);
-    return err;
+    printk(KERN_WARNING "AFFL error: can't change system call\n");
+    return -1;
   }
   
-  if (err = startTimer())
+  if (startTimer())
   {
-    printk(KERN_WARNING "AFFL error (%i): can't startup timer\n", err);
-    return err;
+    printk(KERN_WARNING "AFFL error: can't startup timer\n");
+    return -1;
   }
   
-  return ENO_ERROR;
+  return 0;
 }
 
 //================================================
 
 static void __exit mod_exit(void)
 {
-  if (err = releaseBlackList())
+  if (releaseBlackList())
   {
-    printk(KERN_ERR "AFFL error (%i): can't release blacklist\n", err);
+    printk(KERN_ERR "AFFL error: can't release blacklist\n");
   }
     
-  if (err = returnSysCall())
+  if (returnSysCall())
   {
-    printk(KERN_CRIT "AFFL error (%i): can't return system call back\n", err);
+    printk(KERN_CRIT "AFFL error: can't return system call back\n");
   }
   
-  while(err = stopTimer())
+  while(stopTimer())
   {
-    printk(KERN_WARNING "AFFL error (%i): can't stop timer\n", err);
+    printk(KERN_WARNING "AFFL error: can't stop timer\n");
   }
 }
 
@@ -131,48 +126,48 @@ static void timerFunc(unsigned long data);
 int changeSysCall(void)
 {
   if ((sys_call_table = findSysCallTable()) == NULL)    
-    return -ESYS_CALLS_TABLE_FIND;
+    return -1;
   
-  if (err = changeMemMode(sys_call_table[__NR_execve], MODE_RW))
+  if (changeMemMode(sys_call_table[__NR_execve], MODE_RW))
   {
-    printk(KERN_WARNING "AFFL error (%i): can't set memory RW\n", err);
+    printk(KERN_WARNING "AFFL error: can't set memory RW\n");
     
-    return -ESET_MEM_MOD;
+    return -1;
   }
    
     patchStubExecve();
     
-  if (err = changeMemMode(sys_call_table[__NR_execve], MODE_RO))
+  if (changeMemMode(sys_call_table[__NR_execve], MODE_RO))
   {
-    printk(KERN_ERR "AFFL error (%i): can't set memory RO\n", err);
+    printk(KERN_ERR "AFFL error: can't set memory RO\n");
     
-    return -ESET_MEM_MOD;
+    return -1;
   }
   
-  return ENO_ERROR;
+  return 0;
 }
 
 //=================================================
 
 int returnSysCall(void)
 {
-  if (err = changeMemMode(sys_call_table[__NR_execve], MODE_RW))
+  if (changeMemMode(sys_call_table[__NR_execve], MODE_RW))
   {
-    printk(KERN_CRIT "AFFL error (%i): can't set memory RW. Restart your computer\n", err);
+    printk(KERN_CRIT "AFFL error: can't set memory RW. Restart your computer\n");
     
-    return -ESET_MEM_MOD;
+    return -1;
   }
   
     unpatchStubExecve();
     
-  if (err = changeMemMode(sys_call_table[__NR_execve], MODE_RO))
+  if (changeMemMode(sys_call_table[__NR_execve], MODE_RO))
   {
-    printk(KERN_ERR "AFFL error (%i): can't set memory RO\n", err);
+    printk(KERN_ERR "AFFL error: can't set memory RO\n");
     
-    return -ESET_MEM_MOD;
+    return -1;
   }
   
-  return ENO_ERROR;
+  return 0;
 }
 
 //================================================
@@ -180,32 +175,28 @@ int returnSysCall(void)
 int startTimer(void)
 {
   setup_timer(&timer, timerFunc, 0);
-  if (err = mod_timer(&timer, jiffies + msec_to_jiffies(1000)))
+  if (mod_timer(&timer, jiffies + msec_to_jiffies(1000)))
   {
-    printk(KERN_WARNING "AFFL error (%i): can't mod timer\n", err);
+    printk(KERN_WARNING "AFFL error: can't mod timer\n");
     
-    err = -ETIMER_MOD;
-    
-    return err;
+    return -1;
   }
   
-  return ENO_ERROR;
+  return 0;
 }
 
 //=================================================
 
 int stopTimer(void)
 {
-  if (err = del_timer(&timer))
+  if (del_timer(&timer))
   {
-    printk(KERN_WARNING "AFFL error (%i): can't delete timer\n", err);
+    printk(KERN_WARNING "AFFL error: can't delete timer\n");
  
-    err = -ETIMER_DEL;
-    
-    return err;
+    return -1;
   }
   
-  return ENO_ERROR;
+  return 0;
 }
 
 //---------------------------------------------------
@@ -239,7 +230,7 @@ int changeMemMode(unsigned long **table, TMemMode mode)
   pte_t *pte;
   if (!(pte = lookup_address((long unsigned int)table, &l)))
   {
-    return -ENO_PTE;
+    return -1;
   }
   
   if (mode == MODE_RW)
@@ -247,7 +238,7 @@ int changeMemMode(unsigned long **table, TMemMode mode)
   else
     pte->pte &= ~_PAGE_RW;
   
-  return ENO_ERROR;
+  return 0;
 }
 
 //====================================================
@@ -256,14 +247,14 @@ int patchStubExecve()
 {
   uint8_t *ptr = memchr(sys_call_table[__NR_execve], 0xE8, 200);
   if (!ptr++)
-    return -ESTUB_PATCH;
+    return -1;
   
   addr_call_arg = (unsigned long)ptr;
     
   sysExecve = (void *)((void *)addr_call_arg + 4 + *(int32_t *)addr_call_arg);
   *((int32_t *)addr_call_arg) = (int32_t)((unsigned long)fakeExecve - addr_call_arg - 4);
   
-  return ENO_ERROR;
+  return 0;
 }
 
 //====================================================
@@ -294,16 +285,14 @@ asmlinkage long fakeExecve(const char __user *filename,
 
 void timerFunc(unsigned long data)
 {
-  if (err = refreshBlackList())
+  if (refreshBlackList())
   {
-    printk(KERN_ERR "AFFL error (%i): can't refresh blacklist\n", err);
+    printk(KERN_ERR "AFFL error: can't refresh blacklist\n");
   }
   
-  if (err = mod_timer(&timer, jiffies + msec_to_jiffies(1000)))
+  if (mod_timer(&timer, jiffies + msec_to_jiffies(1000)))
   {
-    printk(KERN_WARNING "AFFL error (%i): can't mod timer\n", err);
-    
-    err = -ETIMER_MOD;
+    printk(KERN_WARNING "AFFL error: can't mod timer\n");
   }
 }
 
