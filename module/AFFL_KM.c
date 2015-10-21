@@ -48,19 +48,19 @@ static int __init mod_init(void)
 {  
   if (err = initBlackList())
   {
-    printk(KERN_WARNING "error (%i): can't init blacklist\n", err);
+    printk(KERN_WARNING "AFFL error (%i): can't init blacklist\n", err);
     return err; 
   }
   
   if (err = changeSysCall())
   {
-    printk(KERN_WARNING "error (%i): can't change system call\n", err);
+    printk(KERN_WARNING "AFFL error (%i): can't change system call\n", err);
     return err;
   }
   
   if (err = startTimer())
   {
-    printk(KERN_WARNING "error (%i): can't startup timer\n", err);
+    printk(KERN_WARNING "AFFL error (%i): can't startup timer\n", err);
     return err;
   }
   
@@ -73,17 +73,17 @@ static void __exit mod_exit(void)
 {
   if (err = releaseBlackList())
   {
-    printk(KERN_ERR "error (%i): can't release blacklist\n", err);
+    printk(KERN_ERR "AFFL error (%i): can't release blacklist\n", err);
   }
     
   if (err = returnSysCall())
   {
-    printk(KERN_CRIT "error (%i): can't return system call back\n", err);
+    printk(KERN_CRIT "AFFL error (%i): can't return system call back\n", err);
   }
   
   while(err = stopTimer())
   {
-    printk(KERN_WARNING "error (%i): can't stop timer\n", err);
+    printk(KERN_WARNING "AFFL error (%i): can't stop timer\n", err);
   }
 }
 
@@ -135,7 +135,7 @@ int changeSysCall(void)
   
   if (err = changeMemMode(sys_call_table[__NR_execve], MODE_RW))
   {
-    printk(KERN_WARNING "error (%i): can't set memory RW\n", err);
+    printk(KERN_WARNING "AFFL error (%i): can't set memory RW\n", err);
     
     return -ESET_MEM_MOD;
   }
@@ -144,7 +144,7 @@ int changeSysCall(void)
     
   if (err = changeMemMode(sys_call_table[__NR_execve], MODE_RO))
   {
-    printk(KERN_ERR "error (%i): can't set memory RO\n", err);
+    printk(KERN_ERR "AFFL error (%i): can't set memory RO\n", err);
     
     return -ESET_MEM_MOD;
   }
@@ -158,7 +158,7 @@ int returnSysCall(void)
 {
   if (err = changeMemMode(sys_call_table[__NR_execve], MODE_RW))
   {
-    printk(KERN_CRIT "error (%i): can't set memory RW. Restart your computer\n", err);
+    printk(KERN_CRIT "AFFL error (%i): can't set memory RW. Restart your computer\n", err);
     
     return -ESET_MEM_MOD;
   }
@@ -167,7 +167,7 @@ int returnSysCall(void)
     
   if (err = changeMemMode(sys_call_table[__NR_execve], MODE_RO))
   {
-    printk(KERN_ERR "error (%i): can't set memory RO\n", err);
+    printk(KERN_ERR "AFFL error (%i): can't set memory RO\n", err);
     
     return -ESET_MEM_MOD;
   }
@@ -182,7 +182,7 @@ int startTimer(void)
   setup_timer(&timer, timerFunc, 0);
   if (err = mod_timer(&timer, jiffies + msec_to_jiffies(1000)))
   {
-    printk(KERN_WARNING "error (%i): can't mod timer\n", err);
+    printk(KERN_WARNING "AFFL error (%i): can't mod timer\n", err);
     
     err = -ETIMER_MOD;
     
@@ -198,7 +198,7 @@ int stopTimer(void)
 {
   if (err = del_timer(&timer))
   {
-    printk(KERN_WARNING "error (%i): can't delete timer\n", err);
+    printk(KERN_WARNING "AFFL error (%i): can't delete timer\n", err);
  
     err = -ETIMER_DEL;
     
@@ -281,7 +281,11 @@ asmlinkage long fakeExecve(const char __user *filename,
 			   const char __user *const __user *envp)
 {
   if (findProcInBlackList(filename))
+  {
+    printk(KERN_NOTICE "AFFL notice: process %s blocked\n", filename);
+    
     return 0;
+  }
   
   return sysExecve(filename, argv, envp);
 }
@@ -292,12 +296,12 @@ void timerFunc(unsigned long data)
 {
   if (err = refreshBlackList())
   {
-    printk(KERN_ERR "error (%i): can't refresh blacklist\n", err);
+    printk(KERN_ERR "AFFL error (%i): can't refresh blacklist\n", err);
   }
   
   if (err = mod_timer(&timer, jiffies + msec_to_jiffies(1000)))
   {
-    printk(KERN_WARNING "error (%i): can't mod timer\n", err);
+    printk(KERN_WARNING "AFFL error (%i): can't mod timer\n", err);
     
     err = -ETIMER_MOD;
   }
