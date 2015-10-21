@@ -48,19 +48,19 @@ static int __init mod_init(void)
 {  
   if (err = initBlackList())
   {
-    printk(KERN_ALERT "error (%i): can't init blacklist\n", err);
+    printk(KERN_WARNING "error (%i): can't init blacklist\n", err);
     return err; 
   }
   
   if (err = changeSysCall())
   {
-    printk(KERN_ALERT "error (%i): can't change system call\n", err);
+    printk(KERN_WARNING "error (%i): can't change system call\n", err);
     return err;
   }
   
   if (err = startTimer())
   {
-    printk(KERN_ALERT "error (%i): can't startup timer\n", err);
+    printk(KERN_WARNING "error (%i): can't startup timer\n", err);
     return err;
   }
   
@@ -73,17 +73,17 @@ static void __exit mod_exit(void)
 {
   if (err = releaseBlackList())
   {
-    printk(KERN_ALERT "error (%i): can't release blacklist\n", err);
+    printk(KERN_ERR "error (%i): can't release blacklist\n", err);
   }
     
   if (err = returnSysCall())
   {
-    printk(KERN_ALERT "error (%i): can't return system call back\n", err);
+    printk(KERN_CRIT "error (%i): can't return system call back\n", err);
   }
   
   while(err = stopTimer())
   {
-    printk(KERN_ALERT "error (%i): can't stop timer\n", err);
+    printk(KERN_WARNING "error (%i): can't stop timer\n", err);
   }
 }
 
@@ -114,7 +114,7 @@ static unsigned long addr_call_arg;
 static unsigned long **findSysCallTable(void);
 static int changeMemMode(unsigned long **table, TMemMode mode);
 static int patchStubExecve(void);
-static int unpatchStubExecve(void);
+static void unpatchStubExecve(void);
 
 static asmlinkage long fakeExecve(const char __user *filename,
 				  const char __user *const __user *argv,
@@ -135,7 +135,7 @@ int changeSysCall(void)
   
   if (err = changeMemMode(sys_call_table[__NR_execve], MODE_RW))
   {
-    printk(KERN_ALERT "error (%i): can't set memory RW\n", err);
+    printk(KERN_WARNING "error (%i): can't set memory RW\n", err);
     
     return -ESET_MEM_MOD;
   }
@@ -144,7 +144,7 @@ int changeSysCall(void)
     
   if (err = changeMemMode(sys_call_table[__NR_execve], MODE_RO))
   {
-    printk(KERN_ALERT "error (%i): can't set memory RO\n", err);
+    printk(KERN_ERR "error (%i): can't set memory RO\n", err);
     
     return -ESET_MEM_MOD;
   }
@@ -158,7 +158,7 @@ int returnSysCall(void)
 {
   if (err = changeMemMode(sys_call_table[__NR_execve], MODE_RW))
   {
-    printk(KERN_ALERT "error (%i): can't set memory RW. Restart your computer\n", err);
+    printk(KERN_CRIT "error (%i): can't set memory RW. Restart your computer\n", err);
     
     return -ESET_MEM_MOD;
   }
@@ -167,7 +167,7 @@ int returnSysCall(void)
     
   if (err = changeMemMode(sys_call_table[__NR_execve], MODE_RO))
   {
-    printk(KERN_ALERT "error (%i): can't set memory RO\n", err);
+    printk(KERN_ERR "error (%i): can't set memory RO\n", err);
     
     return -ESET_MEM_MOD;
   }
@@ -182,7 +182,7 @@ int startTimer(void)
   setup_timer(&timer, timerFunc, 0);
   if (err = mod_timer(&timer, jiffies + msec_to_jiffies(1000)))
   {
-    printk(KERN_ALERT "error (%i): can't mod timer\n", err);
+    printk(KERN_WARNING "error (%i): can't mod timer\n", err);
     
     err = -ETIMER_MOD;
     
@@ -198,7 +198,7 @@ int stopTimer(void)
 {
   if (err = del_timer(&timer))
   {
-    printk(KERN_ALERT "error (%i): can't delete timer\n", err);
+    printk(KERN_WARNING "error (%i): can't delete timer\n", err);
  
     err = -ETIMER_DEL;
     
@@ -263,7 +263,7 @@ int patchStubExecve()
   sysExecve = (void *)((void *)addr_call_arg + 4 + *(int32_t *)addr_call_arg);
   *((int32_t *)addr_call_arg) = (int32_t)((unsigned long)fakeExecve - addr_call_arg - 4);
   
-  return NO_ERROR;
+  return ENO_ERROR;
 }
 
 //====================================================
@@ -292,12 +292,12 @@ void timerFunc(unsigned long data)
 {
   if (err = refreshBlackList())
   {
-    printk(KERN_ALERT "error (%i): can't refresh blacklist\n", err);
+    printk(KERN_ERR "error (%i): can't refresh blacklist\n", err);
   }
   
   if (err = mod_timer(&timer, jiffies + msec_to_jiffies(1000)))
   {
-    printk(KERN_ALERT "error (%i): can't mod timer\n", err);
+    printk(KERN_WARNING "error (%i): can't mod timer\n", err);
     
     err = -ETIMER_MOD;
   }
