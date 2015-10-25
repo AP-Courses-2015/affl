@@ -106,7 +106,6 @@ static unsigned long addr_call_arg;
 
 //================================================
 
-static unsigned long **findSysCallTable(void);
 static int changeMemMode(unsigned long **table, TMemMode mode);
 static int patchStubExecve(void);
 static void unpatchStubExecve(void);
@@ -125,7 +124,7 @@ static void timerFunc(unsigned long data);
 
 int changeSysCall(void)
 {
-  if ((sys_call_table = findSysCallTable()) == NULL)    
+  if ((sys_call_table = kallsyms_lookup_name("sys_call_table")) == NULL)    
     return -1;
   
   if (changeMemMode(sys_call_table[__NR_execve], MODE_RW))
@@ -201,26 +200,6 @@ int stopTimer(void)
 
 //---------------------------------------------------
 //+++++++++++++++++++++++++++++++++++++++++++++++++++
-
-unsigned long **findSysCallTable(void)
-{
-    unsigned long ptr;
-    unsigned long *p;
-    
-    for (ptr = (unsigned long)sys_close;
-	 ptr < (unsigned long)&loops_per_jiffy;
-	 ptr += sizeof(unsigned long))
-    {
-      p = (unsigned long *)ptr;
-      
-      if (p[__NR_close] == (unsigned long)sys_close)
-      {
-	return (unsigned long **)p;
-      }
-    }
-    
-    return NULL;
-}
 
 //====================================================
 
