@@ -157,7 +157,7 @@ int findProcInBlackList(const char*name)
 		}
 		pos++;
 	}
-	return NULL;
+	return -1;
 }
 
 
