@@ -34,8 +34,6 @@ MODULE_DESCRIPTION("firewall");
 
 static int changeSysCall(void);
 static int returnSysCall(void);
-static int startTimer(void);
-static int stopTimer(void);
 
 //================================================
 
@@ -75,11 +73,6 @@ static void __exit mod_exit(void)
   {
     printk(KERN_CRIT "AFFL error: can't return system call back\n");
   }
-  
-  while(stopTimer())
-  {
-    printk(KERN_WARNING "AFFL error: can't stop timer\n");
-  }
 }
 
 //================================================
@@ -99,7 +92,6 @@ typedef enum
 //================================================
 
 static unsigned long **sys_call_table;
-static struct timer_list timer;
 
 //Адрес агрумента call (адреса sys_execve), который находится в stub_execve
 static unsigned long addr_call_arg;
@@ -117,8 +109,6 @@ static asmlinkage long fakeExecve(const char __user *filename,
 static asmlinkage long (*sysExecve)(const char __user *filename,
 				    const char __user *const __user *argv,
 				    const char __user *const __user *envp);
-
-static void timerFunc(unsigned long data);
 
 //=================================================
 
@@ -163,35 +153,6 @@ int returnSysCall(void)
   {
     printk(KERN_ERR "AFFL error: can't set memory RO\n");
     
-    return -1;
-  }
-  
-  return 0;
-}
-
-//================================================
-
-int startTimer(void)
-{
-  setup_timer(&timer, timerFunc, 0);
-  if (mod_timer(&timer, jiffies + msec_to_jiffies(1000)))
-  {
-    printk(KERN_WARNING "AFFL error: can't mod timer\n");
-    
-    return -1;
-  }
-  
-  return 0;
-}
-
-//=================================================
-
-int stopTimer(void)
-{
-  if (del_timer(&timer))
-  {
-    printk(KERN_WARNING "AFFL error: can't delete timer\n");
- 
     return -1;
   }
   
@@ -258,21 +219,6 @@ asmlinkage long fakeExecve(const char __user *filename,
   }
   
   return sysExecve(filename, argv, envp);
-}
-
-//=====================================================
-
-void timerFunc(unsigned long data)
-{
-  if (refreshBlackList())
-  {
-    printk(KERN_ERR "AFFL error: can't refresh blacklist\n");
-  }
-  
-  if (mod_timer(&timer, jiffies + msec_to_jiffies(1000)))
-  {
-    printk(KERN_WARNING "AFFL error: can't mod timer\n");
-  }
 }
 
 //------------------------------------------------------
