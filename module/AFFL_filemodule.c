@@ -13,7 +13,7 @@
 #include <linux/seq_file.h>
 
 #define PROCFS_NAME 		"blist"
-#define BlackList "AFFL_blacklist"
+#define BlackList "/home/natali/module/AFFL_blacklist"
 #define MYDIRPROC "Firewall"
 #define MYPROC "/proc/Firewall/blist"
 /**
@@ -161,10 +161,15 @@ int findProcInBlackList(const char*name)
 }
 
 
+
 int releaseBlackList(void)
 {
 	filp_close(fileproc,0);
 	remove_proc_entry(PROCFS_NAME, Our_Proc_Dir);
 	remove_proc_entry(MYDIRPROC,NULL);
 	kfree(procfs_buffer);
+	
 }
+
+
+MODULE_LICENSE("GPL");
