@@ -5,7 +5,6 @@
  * 
  *Функции работы с черным списком:
  * initBlackList()		(инициализирует список)
- * refreshBlackList()		(обновляет список по таймеру (раз в 1 секунду)
  * findProcInBlackList()	(ищет имя процесса в черном списке.
  * 				 Если процесс не найден - возвращает 0)
  * releaseBlackList()		(освобождает список)
@@ -23,7 +22,6 @@
 #include <linux/init.h>
 #include <linux/syscalls.h>
 #include <linux/delay.h>
-#include <linux/timer.h>
 #include "AFFL_list.h"
 
 MODULE_LICENSE("GPL");
@@ -48,12 +46,6 @@ static int __init mod_init(void)
   if (changeSysCall())
   {
     printk(KERN_WARNING "AFFL error: can't change system call\n");
-    return -1;
-  }
-  
-  if (startTimer())
-  {
-    printk(KERN_WARNING "AFFL error: can't startup timer\n");
     return -1;
   }
   
