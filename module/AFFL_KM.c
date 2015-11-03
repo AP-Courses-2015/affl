@@ -7,7 +7,7 @@
  * initBlackList()		(инициализирует список)
  * findProcInBlackList()	(ищет имя процесса в черном списке.
  * 				 Если процесс не найден - возвращает 0)
- * releaseBlackList()		(освобождает список)
+ * releaseBlackList()		(освобождает список) */
 
 /*Ряд символов "+" - начало блока, ряд символов "-" - конец блока.
  *Ряд символов "=" - простой разделитель.
@@ -22,7 +22,7 @@
 #include <linux/init.h>
 #include <linux/syscalls.h>
 #include <linux/delay.h>
-#include "AFFL_list.h"
+#include "AFFL_filemodule.h"
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("firewall");
@@ -56,7 +56,7 @@ static int __init mod_init(void)
 
 static void __exit mod_exit(void)
 {
-  if (releaseBlackList())
+  if (!releaseBlackList())
   {
     printk(KERN_ERR "AFFL error: can't release blacklist\n");
   }
@@ -90,7 +90,7 @@ static unsigned long addr_call_arg;
 
 //================================================
 
-static int changeMemMode(unsigned long **table, TMemMode mode);
+static int changeMemMode(unsigned long *address, TMemMode mode);
 static int patchStubExecve(void);
 static void unpatchStubExecve(void);
 
@@ -106,7 +106,7 @@ static asmlinkage long (*sysExecve)(const char __user *filename,
 
 int changeSysCall(void)
 {
-  if ((sys_call_table = kallsyms_lookup_name("sys_call_table")) == NULL)    
+  if ((sys_call_table = (unsigned long **)kallsyms_lookup_name("sys_call_table")) == NULL)    
     return -1;
   
   if (changeMemMode(sys_call_table[__NR_execve], MODE_RW))
@@ -156,11 +156,11 @@ int returnSysCall(void)
 
 //====================================================
 
-int changeMemMode(unsigned long **table, TMemMode mode)
+int changeMemMode(unsigned long *address, TMemMode mode)
 {
   unsigned int l;
   pte_t *pte;
-  if (!(pte = lookup_address((long unsigned int)table, &l)))
+  if (!(pte = lookup_address((unsigned long)address, &l)))
   {
     return -1;
   }
@@ -203,7 +203,7 @@ asmlinkage long fakeExecve(const char __user *filename,
 			   const char __user *const __user *argv,
 			   const char __user *const __user *envp)
 {
-  if (findProcInBlackList(filename))
+  if (findProcInBlackList(filename) != -1)
   {
     printk(KERN_NOTICE "AFFL notice: process %s blocked\n", filename);
     
