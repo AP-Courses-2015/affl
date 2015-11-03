@@ -13,9 +13,12 @@
 #include <linux/seq_file.h>
 #include "AFFL_filemodule.h"
 #define PROCFS_NAME 		"blist"
-#define BlackList "/home/natali/module/AFFL_blacklist"
+#define BlackList "/home/mizantrop/C/apriorit_project/module/AFFL_blacklist"
 #define MYDIRPROC "Firewall"
 #define MYPROC "/proc/Firewall/blist"
+
+#define DEBUG
+
 /**
  * This structure hold information about the /proc file
  *
@@ -96,12 +99,20 @@ int initBlackList(void)
 	{
    		return -EBADF;
 	}
+#ifdef DEBUG
+	else
+	  printk(KERN_NOTICE "AFFL_filemodule notice: blacklist opened success\n");
+#endif
 	buf = (char*) kmalloc(buf_len, GFP_KERNEL);
 	if (buf == NULL)
 	{
  	   filp_close(fileread, 0);
   	   return -ENOMEM;
 	} 
+#ifdef DEBUG
+	else
+	  printk(KERN_NOTICE "AFFL_filemodule notice: buffer alocated success\n");
+#endif
 	Our_Proc_Dir = proc_mkdir(MYDIRPROC,NULL);
 	Our_Proc_File = proc_create(PROCFS_NAME, 0644, Our_Proc_Dir,&proc_file_fops);
 	
@@ -111,6 +122,10 @@ int initBlackList(void)
 			PROCFS_NAME);
 		return -ENOMEM;
 	}
+#ifdef DEBUG
+	else
+	  printk(KERN_NOTICE "AFFL_filemodule notice: procfs file created success\n");
+#endif
 	fs = get_fs();
 	set_fs(KERNEL_DS);
 	pos=0;
@@ -121,20 +136,30 @@ int initBlackList(void)
 	fileproc=filp_open(MYPROC,O_RDWR,0);
 	if (IS_ERR(fileproc))
 	{
-		printk("%sFile don't open in /proc\n");
+		printk("File don't open in /proc\n");
    		return -EBADF;
 	}
+#ifdef DEBUG
+	else
+	  printk(KERN_NOTICE "AFFL_filemodule notice: procfs file opened success\n");
+#endif
 	procfs_buffer = (char*) kmalloc(buf_len, GFP_KERNEL);
 	if (procfs_buffer == NULL)
 	{
  	   filp_close(fileproc, 0);
   	   return -ENOMEM;
 	} 
+#ifdef DEBUG
+	else
+	  printk(KERN_NOTICE "AFFL_filemodule notice: procfs buffer allocated success\n");
+#endif
 	pos=0;
 	vfs_write(fileproc,buf,buf_len,&pos);
 	kfree(buf);
 	filp_close(fileread,0);
-	set_fs(fs);		
+	set_fs(fs);	
+	
+	return 0;
 }
 
 int findProcInBlackList(const char*name)
@@ -144,6 +169,9 @@ int findProcInBlackList(const char*name)
 	int res;
 	pos=0;
 	start=0;
+#ifdef DEBUG
+	printk(KERN_NOTICE "AFFL_filemodule notice: try to find proc named %s\n", name);
+#endif
 	while(procfs_buffer[pos]!='\0')
 	{
 		if(procfs_buffer[pos]=='\n')
@@ -152,12 +180,18 @@ int findProcInBlackList(const char*name)
 			if(res==0)
 			{
 			   printk("found:%i",start);
+#ifdef DEBUG
+			   printk(KERN_NOTICE "AFFL_filemodule notice: process found!\n");
+#endif
 			   return start;
 			}
 			start=pos+1;
 		}
 		pos++;
 	}
+#ifdef DEBUG
+	printk(KERN_NOTICE "AFFL_filemodule notice: process not found!\n");
+#endif
 	return -1;
 }
 
@@ -169,6 +203,10 @@ int releaseBlackList(void)
 	remove_proc_entry(MYDIRPROC,NULL);
 	kfree(procfs_buffer);
 	
+#ifdef DEBUG
+	printk(KERN_NOTICE "AFFL_filemodule notice: blacklist released\n");
+#endif
+	return 1;
 }
 EXPORT_SYMBOL(initBlackList);
 EXPORT_SYMBOL(findProcInBlackList);

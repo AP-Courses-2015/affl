@@ -1,5 +1,5 @@
-obj-m := AFFL_KM.o
+obj-m += AFFL_KM.o AFFL_filemodule.o
 all:
-	$(MAKE) -C /lib/modules/3.13.0-24-generic/build/ M=`pwd` modules
+	$(MAKE) -C /lib/modules/$(shell uname -r)/build/ M=$(PWD) modules
 clean:
-	$(MAKE) -C /lib/modules/3.13.0-24-generic/build M=`pwd` clean
+	$(MAKE) -C /lib/modules/$(shell uname -r)/build/ M=$(PWD) clean
