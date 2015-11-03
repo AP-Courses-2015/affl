@@ -203,7 +203,7 @@ asmlinkage long fakeExecve(const char __user *filename,
 			   const char __user *const __user *argv,
 			   const char __user *const __user *envp)
 {
-  if (findProcInBlackList(filename))
+  if (findProcInBlackList(filename) != -1)
   {
     printk(KERN_NOTICE "AFFL notice: process %s blocked\n", filename);
     
