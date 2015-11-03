@@ -11,7 +11,7 @@
 #include <linux/file.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
-
+#include "AFFL_filemodule.h"
 #define PROCFS_NAME 		"blist"
 #define BlackList "/home/natali/module/AFFL_blacklist"
 #define MYDIRPROC "Firewall"
@@ -161,7 +161,6 @@ int findProcInBlackList(const char*name)
 }
 
 
-
 int releaseBlackList(void)
 {
 	filp_close(fileproc,0);
@@ -170,6 +169,7 @@ int releaseBlackList(void)
 	kfree(procfs_buffer);
 	
 }
-
-
+EXPORT_SYMBOL(initBlackList);
+EXPORT_SYMBOL(findProcInBlackList);
+EXPORT_SYMBOL(releaseBlackList);
 MODULE_LICENSE("GPL");
