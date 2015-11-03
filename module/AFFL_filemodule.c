@@ -91,10 +91,11 @@ int initBlackList(void)
 	mm_segment_t fs;
 	loff_t pos;
 	size_t buf_len=4096;
-	fileread=filp_open(BlackList,O_RDONLY,0);
+	fileread=filp_open(BlackList,O_RDWR|O_CREAT,0644);
 	if (IS_ERR(fileread))
+	{
    		return -EBADF;
-	
+	}
 	buf = (char*) kmalloc(buf_len, GFP_KERNEL);
 	if (buf == NULL)
 	{
