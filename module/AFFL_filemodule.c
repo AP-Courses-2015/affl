@@ -130,7 +130,8 @@ int initBlackList(void)
 	set_fs(KERNEL_DS);
 	pos=0;
 	count=vfs_read(fileread,buf,buf_len,&pos);
-	buf[pos]='\0';
+	buf[pos++]='\n';
+	buf[pos] = '\0';
 	last_pos=pos;
 	
 	fileproc=filp_open(MYPROC,O_RDWR,0);
@@ -170,16 +171,27 @@ int findProcInBlackList(const char*name)
 	pos=0;
 	start=0;
 #ifdef DEBUG
+	char debug_buffer[100];
+	int debug_pointer = 0;
 	printk(KERN_NOTICE "AFFL_filemodule notice: try to find proc named %s\n", name);
 #endif
 	while(procfs_buffer[pos]!='\0')
 	{
+#ifdef DEBUG
+		debug_buffer[debug_pointer++] = procfs_buffer[pos];
+		debug_buffer[debug_pointer] = '\0';
+#endif
 		if(procfs_buffer[pos]=='\n')
 		{
 			res=strncmp(name,&procfs_buffer[start],pos-start);
+#ifdef DEBUG
+			printk(KERN_NOTICE "AFFL_filemodule notice: checked process: %s\n", debug_buffer);
+			printk(KERN_NOTICE "AFFL_filemodule notice: check result: %i\n", res);
+			debug_pointer = 0;
+#endif
 			if(res==0)
 			{
-			   printk("found:%i",start);
+			   printk("found:%i\n",start);
 #ifdef DEBUG
 			   printk(KERN_NOTICE "AFFL_filemodule notice: process found!\n");
 #endif
@@ -190,6 +202,7 @@ int findProcInBlackList(const char*name)
 		pos++;
 	}
 #ifdef DEBUG
+	printk(KERN_NOTICE "AFFL_filemodule notice: last checked process: %s\n", debug_buffer);
 	printk(KERN_NOTICE "AFFL_filemodule notice: process not found!\n");
 #endif
 	return -1;

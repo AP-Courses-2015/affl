@@ -128,7 +128,7 @@ int changeSysCall(void)
     return -1;
 #ifdef DEBUG
   else
-    printk(KERN_NOTICE "AFFL notice: system calls table found. It address: %x\n", (unsigned long)sys_call_table);
+    printk(KERN_NOTICE "AFFL notice: system calls table found. It address: %x\n", (unsigned)sys_call_table);
 #endif
   
   if (changeMemMode(sys_call_table[__NR_execve], MODE_RW))
@@ -224,7 +224,7 @@ int patchStubExecve()
     return -1;
 #ifdef DEBUG
   else
-    printk(KERN_NOTICE "AFFL notice: call address found (%x)\n", (unsigned long)ptr);
+    printk(KERN_NOTICE "AFFL notice: call address found (%x)\n", (unsigned)ptr);
 #endif
   
   addr_call_arg = (unsigned long)ptr;
