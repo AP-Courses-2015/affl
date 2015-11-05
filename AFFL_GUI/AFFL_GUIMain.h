@@ -11,8 +11,10 @@
 #define AFFL_GUIMAIN_H
 
 //(*Headers(AFFL_GUIFrame)
+#include <wx/grid.h>
 #include <wx/sizer.h>
 #include <wx/notebook.h>
+#include <wx/button.h>
 #include <wx/panel.h>
 #include <wx/frame.h>
 //*)
@@ -30,15 +32,21 @@ class AFFL_GUIFrame: public wxFrame
         //*)
 
         //(*Identifiers(AFFL_GUIFrame)
-        static const long ID_PANEL1;
-        static const long ID_PANEL2;
+        static const long ID_GRID1;
+        static const long ID_ADD;
+        static const long ID_KILL;
+        static const long ID_PROC_LIST;
+        static const long ID_BLACKLIST;
         static const long ID_NOTEBOOK1;
         //*)
 
         //(*Declarations(AFFL_GUIFrame)
-        wxPanel* Panel1;
-        wxPanel* Panel2;
+        wxPanel* pnlBlacklist;
+        wxGrid* grdProcList;
+        wxButton* btnKill;
         wxNotebook* Notebook1;
+        wxButton* btnAdd;
+        wxPanel* pnlProcList;
         //*)
 
         DECLARE_EVENT_TABLE()
