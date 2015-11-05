@@ -19,6 +19,7 @@
 #include <wx/frame.h>
 #include <wx/listbox.h>
 //*)
+#include "lists.h"
 
 class AFFL_GUIFrame: public wxFrame
 {
@@ -55,6 +56,9 @@ class AFFL_GUIFrame: public wxFrame
         wxButton* btnAdd;
         wxPanel* pnlProcList;
         //*)
+
+        ProcList *proc_list;
+        BlackList *black_list;
 
         DECLARE_EVENT_TABLE()
 };

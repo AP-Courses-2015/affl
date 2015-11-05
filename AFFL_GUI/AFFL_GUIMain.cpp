@@ -119,6 +119,10 @@ AFFL_GUIFrame::AFFL_GUIFrame(wxWindow* parent,wxWindowID id)
     BoxSizer1->Fit(this);
     BoxSizer1->SetSizeHints(this);
     //*)
+
+    black_list = new BlackList(lbBlacklist);
+    proc_list = new ProcList(grdProcList, black_list);
+    proc_list->update();
 }
 
 AFFL_GUIFrame::~AFFL_GUIFrame()
