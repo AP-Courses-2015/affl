@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<wxsmith>
+	<object class="wxFrame" name="AFFL_GUIFrame">
+		<title>Application firewall</title>
+		<object class="wxBoxSizer" variable="BoxSizer1" member="no">
+			<object class="sizeritem">
+				<object class="wxNotebook" name="ID_NOTEBOOK1" variable="Notebook1" member="yes">
+					<size>487,491</size>
+					<object class="notebookpage">
+						<object class="wxPanel" name="ID_PANEL1" variable="Panel1" member="yes">
+							<size>462,428</size>
+							<object class="wxBoxSizer" variable="BoxSizer3" member="no">
+								<object class="sizeritem">
+									<object class="wxBoxSizer" variable="BoxSizer4" member="no">
+										<object class="sizeritem">
+											<object class="wxGrid" name="ID_PROC_LIST" variable="grdProcList" member="yes">
+												<cols>2</cols>
+												<labelcolwidth>1</labelcolwidth>
+												<collabels>
+													<item>ID</item>
+													<item>Name</item>
+												</collabels>
+												<size>294,452</size>
+											</object>
+											<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+											<option>1</option>
+										</object>
+									</object>
+									<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+									<option>1</option>
+								</object>
+								<object class="sizeritem">
+									<object class="wxBoxSizer" variable="BoxSizer5" member="no">
+										<orient>wxVERTICAL</orient>
+										<object class="sizeritem">
+											<object class="wxButton" name="ID_ADD" variable="btnAdd" member="yes">
+												<label>Add to blacklist</label>
+												<size>129,27</size>
+											</object>
+											<flag>wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+											<border>5</border>
+											<option>1</option>
+										</object>
+										<object class="sizeritem">
+											<object class="wxButton" name="ID_KILL" variable="btnKill" member="yes">
+												<label>Kill process</label>
+												<size>127,27</size>
+											</object>
+											<flag>wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+											<border>5</border>
+											<option>1</option>
+										</object>
+									</object>
+									<flag>wxALIGN_RIGHT|wxALIGN_TOP</flag>
+								</object>
+							</object>
+						</object>
+						<label>Process list</label>
+					</object>
+					<object class="notebookpage">
+						<object class="wxPanel" name="ID_PANEL2" variable="Panel2" member="yes">
+							<object class="wxBoxSizer" variable="BoxSizer2" member="no" />
+						</object>
+						<label>Blacklist</label>
+					</object>
+				</object>
+				<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+				<option>1</option>
+			</object>
+		</object>
+	</object>
+</wxsmith>
