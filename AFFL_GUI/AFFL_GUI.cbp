@@ -31,8 +31,9 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="`wx-config --cflags`" />
+			<Add option="-std=c++11" />
 			<Add option="-Wall" />
+			<Add option="`wx-config --cppflags`" />
 		</Compiler>
 		<Linker>
 			<Add option="`wx-config --libs`" />
@@ -41,6 +42,8 @@
 		<Unit filename="AFFL_GUIApp.h" />
 		<Unit filename="AFFL_GUIMain.cpp" />
 		<Unit filename="AFFL_GUIMain.h" />
+		<Unit filename="lists.cpp" />
+		<Unit filename="lists.h" />
 		<Unit filename="wxsmith/AFFL_GUIframe.wxs" />
 		<Extensions>
 			<envvars />

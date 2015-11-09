@@ -1,14 +1,15 @@
 #include "lists.h"
+#include <memory>
 
 void BlackList::addByPath(const wxString &path)
 {
-    if (!m_black_list->FindString(path))
+    if (m_black_list->FindString(path) == wxNOT_FOUND)
         m_black_list->AppendAndEnsureVisible(path);
 }
 
 void BlackList::delSelected()
 {
-    //m_black_list->DoDeleteOneItem(m_black_list->GetSelection());
+    m_black_list->removeSelected();
 }
 
 //=======================================================================================
@@ -19,13 +20,12 @@ void ProcList::killSelected()
 
     wxShell(wxString::Format("kill %s", id));
 
-    delSelectedProcInfoLine();
+    update();
 }
 
 void ProcList::addSelectedToBlacklist()
 {
-    //wxString path = getSelectedProcInfo().path;
-    //m_black_list->addByPath(path);
+    m_black_list->addByPath(getSelectedProcInfo().path);
     killSelected();
 }
 
@@ -53,7 +53,8 @@ void ProcList::update()
         return;
     }
 
-//    m_proc_list->Clear();
+    if (m_proc_list->GetRows() > 0)
+        m_proc_list->DeleteRows(0, m_proc_list->GetRows());
     wxString file_name;
     wxTextFile file;
     do
@@ -62,8 +63,12 @@ void ProcList::update()
         if (!next_dir.ToLong(&id))
             continue;
 
+
         ProcInfo pi = getProcInfo(dir, next_dir);
-        addProcInfoLine(pi);
+        //If we have path to binary file, then add to list
+        if (!pi.path.IsEmpty())
+            if (pi.path[0] == '/')
+                addProcInfoLine(pi);
     } while(dir.GetNext(&next_dir));
 
     m_proc_list->AutoSizeColumns();
@@ -71,12 +76,18 @@ void ProcList::update()
 
 ProcInfo ProcList::getProcInfo(wxDir &dir, wxString &this_name)
 {
+    wxTextFile file;
     ProcInfo pi;
+    wxString full_dir_path(dir.GetNameWithSep() + this_name);
+    wxString full_file_name(full_dir_path + wxT("/comm"));
 
     pi.id = this_name;
-    wxString tmp(dir.GetNameWithSep() + this_name + wxT("/cmdline"));
-    file.Open(tmp);
+    file.Open(full_file_name);
     pi.name = file.GetFirstLine();
+    file.Close();
+    full_file_name = full_dir_path + wxT("/cmdline");
+    file.Open(full_file_name);
+    pi.path = file.GetFirstLine().BeforeFirst(' ').BeforeFirst('\0');
     file.Close();
 
     return pi;
@@ -85,11 +96,10 @@ ProcInfo ProcList::getProcInfo(wxDir &dir, wxString &this_name)
 ProcInfo ProcList::getSelectedProcInfo()
 {
     ProcInfo pi;
-    pi.id = wxT("0");
-    pi.name = wxEmptyString;
-
-    /*m_proc_list->
-    wxGrid::GetCellValue()*/
+    int selected_row = m_proc_list->GetSelectedRows().Item(0);
+    pi.id = m_proc_list->GetCellValue(selected_row, 0);
+    pi.name = m_proc_list->GetCellValue(selected_row, 1);
+    pi.path = m_proc_list->GetCellValue(selected_row, 2);
 
     return pi;
 }
@@ -101,10 +111,6 @@ void ProcList::addProcInfoLine(const ProcInfo &pi)
                               pi.id);
     m_proc_list->SetCellValue(m_proc_list->GetRows()-1, 1,
                               pi.name);
-}
-
-void ProcList::delSelectedProcInfoLine()
-{
-    /*m_id_list->DoDeleteOneItem(GetSelection());
-    m_names_list->DoDeleteOneItem(GetSelection());*/
+    m_proc_list->SetCellValue(m_proc_list->GetRows()-1, 2,
+                              pi.path);
 }

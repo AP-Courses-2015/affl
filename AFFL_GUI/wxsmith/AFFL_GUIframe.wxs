@@ -5,22 +5,21 @@
 		<object class="wxBoxSizer" variable="BoxSizer1" member="no">
 			<object class="sizeritem">
 				<object class="wxNotebook" name="ID_NOTEBOOK1" variable="Notebook1" member="yes">
-					<size>487,491</size>
+					<size>508,533</size>
 					<object class="notebookpage">
-						<object class="wxPanel" name="ID_PANEL1" variable="Panel1" member="yes">
-							<size>462,428</size>
-							<object class="wxBoxSizer" variable="BoxSizer3" member="no">
+						<object class="wxPanel" name="ID_PROC_PAN" variable="pnlProcList" member="yes">
+							<object class="wxBoxSizer" variable="BoxSizer2" member="no">
 								<object class="sizeritem">
-									<object class="wxBoxSizer" variable="BoxSizer4" member="no">
+									<object class="wxBoxSizer" variable="BoxSizer3" member="no">
 										<object class="sizeritem">
 											<object class="wxGrid" name="ID_PROC_LIST" variable="grdProcList" member="yes">
-												<cols>2</cols>
-												<labelcolwidth>1</labelcolwidth>
+												<cols>3</cols>
 												<collabels>
 													<item>ID</item>
 													<item>Name</item>
+													<item>Path</item>
 												</collabels>
-												<size>294,452</size>
+												<size>295,471</size>
 											</object>
 											<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
 											<option>1</option>
@@ -30,7 +29,7 @@
 									<option>1</option>
 								</object>
 								<object class="sizeritem">
-									<object class="wxBoxSizer" variable="BoxSizer5" member="no">
+									<object class="wxBoxSizer" variable="BoxSizer4" member="no">
 										<orient>wxVERTICAL</orient>
 										<object class="sizeritem">
 											<object class="wxButton" name="ID_ADD" variable="btnAdd" member="yes">
@@ -38,28 +37,67 @@
 												<size>129,27</size>
 											</object>
 											<flag>wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+											<option>1</option>
+										</object>
+										<object class="spacer">
+											<flag>wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
 											<border>5</border>
 											<option>1</option>
+											<size>20,25</size>
 										</object>
 										<object class="sizeritem">
 											<object class="wxButton" name="ID_KILL" variable="btnKill" member="yes">
 												<label>Kill process</label>
-												<size>127,27</size>
+												<size>129,27</size>
+												<handler function="OnbtnKillClick" entry="EVT_BUTTON" />
 											</object>
 											<flag>wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
-											<border>5</border>
 											<option>1</option>
 										</object>
 									</object>
-									<flag>wxALIGN_RIGHT|wxALIGN_TOP</flag>
+									<flag>wxALL|wxALIGN_RIGHT|wxALIGN_TOP</flag>
 								</object>
 							</object>
 						</object>
 						<label>Process list</label>
 					</object>
 					<object class="notebookpage">
-						<object class="wxPanel" name="ID_PANEL2" variable="Panel2" member="yes">
-							<object class="wxBoxSizer" variable="BoxSizer2" member="no" />
+						<object class="wxPanel" name="ID_BLACK_PAN" variable="pnlBlacklist" member="yes">
+							<object class="wxBoxSizer" variable="BoxSizer5" member="no">
+								<object class="sizeritem">
+									<object class="wxBoxSizer" variable="BoxSizer6" member="no" />
+									<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+									<option>1</option>
+								</object>
+								<object class="sizeritem">
+									<object class="wxBoxSizer" variable="BoxSizer7" member="no">
+										<orient>wxVERTICAL</orient>
+										<object class="sizeritem">
+											<object class="wxButton" name="ID_ADD_PATH" variable="btnAddPath" member="yes">
+												<label>Add by path</label>
+												<size>126,27</size>
+											</object>
+											<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+											<option>1</option>
+										</object>
+										<object class="spacer">
+											<flag>wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+											<border>5</border>
+											<option>1</option>
+											<size>20,26</size>
+										</object>
+										<object class="sizeritem">
+											<object class="wxButton" name="ID_DEL" variable="btnDel" member="yes">
+												<label>Delete </label>
+												<size>127,27</size>
+											</object>
+											<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
+											<option>1</option>
+										</object>
+									</object>
+									<flag>wxALL|wxALIGN_RIGHT|wxALIGN_TOP</flag>
+								</object>
+							</object>
 						</object>
 						<label>Blacklist</label>
 					</object>
