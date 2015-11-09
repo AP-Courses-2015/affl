@@ -2,6 +2,8 @@
 <wxsmith>
 	<object class="wxFrame" name="AFFL_GUIFrame">
 		<title>Application firewall</title>
+		<handler function="OnSetFocus" entry="EVT_SET_FOCUS" />
+		<handler function="OnKillFocus" entry="EVT_KILL_FOCUS" />
 		<object class="wxBoxSizer" variable="BoxSizer1" member="no">
 			<object class="sizeritem">
 				<object class="wxNotebook" name="ID_NOTEBOOK1" variable="Notebook1" member="yes">
@@ -105,6 +107,10 @@
 				<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
 				<option>1</option>
 			</object>
+		</object>
+		<object class="wxTimer" name="ID_REFRESH" variable="tRefresh" member="yes">
+			<interval>1000</interval>
+			<handler function="OntRefreshTrigger" entry="EVT_TIMER" />
 		</object>
 	</object>
 </wxsmith>

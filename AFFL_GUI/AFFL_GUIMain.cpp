@@ -122,6 +122,8 @@ AFFL_GUIFrame::AFFL_GUIFrame(wxWindow* parent,wxWindowID id)
 
     Connect(ID_KILL,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&AFFL_GUIFrame::OnbtnKillClick);
     Connect(ID_REFRESH,wxEVT_TIMER,(wxObjectEventFunction)&AFFL_GUIFrame::OntRefreshTrigger);
+    Connect(wxEVT_SET_FOCUS,(wxObjectEventFunction)&AFFL_GUIFrame::OnSetFocus);
+    Connect(wxEVT_KILL_FOCUS,(wxObjectEventFunction)&AFFL_GUIFrame::OnKillFocus);
     //*)
     Connect(ID_PROC_LIST, wxEVT_GRID_RANGE_SELECT, (wxObjectEventFunction)&AFFL_GUIFrame::OngrdRangeSelect);
 
@@ -171,4 +173,14 @@ void AFFL_GUIFrame::OnbtnDelClick(wxCommandEvent& event)
 void AFFL_GUIFrame::OntRefreshTrigger(wxTimerEvent& event)
 {
     proc_list->update();
+}
+
+void AFFL_GUIFrame::OnKillFocus(wxFocusEvent& event)
+{
+    tRefresh.Stop();
+}
+
+void AFFL_GUIFrame::OnSetFocus(wxFocusEvent& event)
+{
+    tRefresh.Start();
 }

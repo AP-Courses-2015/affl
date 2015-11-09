@@ -66,11 +66,16 @@ class ProcList
     private:
         std::unique_ptr<wxGrid> m_proc_list;
         std::unique_ptr<BlackList> m_black_list;
+        int m_rows_count;
+        int m_rows_using;
 
     public:
         ProcList(wxGrid *proc_list, BlackList *black_list)
             : m_proc_list(proc_list), m_black_list(black_list)
         {
+            m_rows_count = 0;
+            m_rows_using = 0;
+
             m_proc_list->SetRowLabelSize(0);
             m_proc_list->SetSelectionMode(wxGrid::wxGridSelectRows);
             m_proc_list->DisableDragRowSize();

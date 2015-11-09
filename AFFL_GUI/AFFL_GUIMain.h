@@ -36,6 +36,8 @@ class AFFL_GUIFrame: public wxFrame
         void OnbtnAddPathClick(wxCommandEvent& event);
         void OnbtnDelClick(wxCommandEvent& event);
         void OntRefreshTrigger(wxTimerEvent& event);
+        void OnKillFocus(wxFocusEvent& event);
+        void OnSetFocus(wxFocusEvent& event);
         //*)
         void OngrdRangeSelect(wxGridRangeSelectEvent &event);
 

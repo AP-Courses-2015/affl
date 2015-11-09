@@ -32,6 +32,9 @@ void ProcList::addSelectedToBlacklist()
 
 void ProcList::update()
 {
+    m_rows_using = 0;
+    m_proc_list->ClearGrid();
+
     //Template disable automatic errors
     wxLogNull log_null;
 
@@ -44,7 +47,6 @@ void ProcList::update()
         return;
     }
 
-
     wxString next_dir;
     int flags = wxDIR_DIRS;
     if (!dir.GetFirst(&next_dir, wxT(""), flags))
@@ -54,8 +56,6 @@ void ProcList::update()
         return;
     }
 
-    if (m_proc_list->GetRows() > 0)
-        m_proc_list->DeleteRows(0, m_proc_list->GetRows());
     wxString file_name;
     wxTextFile file;
     do
@@ -70,6 +70,12 @@ void ProcList::update()
             if (pi.path[0] == '/')
                 addProcInfoLine(pi);
     } while(dir.GetNext(&next_dir));
+
+    if (m_rows_count != m_rows_using)
+    {
+        m_proc_list->DeleteRows(m_rows_using, m_rows_count - m_rows_using);
+        m_rows_count = m_rows_using;
+    }
 
     m_proc_list->AutoSizeColumns();
 }
@@ -106,11 +112,16 @@ ProcInfo ProcList::getSelectedProcInfo()
 
 void ProcList::addProcInfoLine(const ProcInfo &pi)
 {
-    m_proc_list->AppendRows();
-    m_proc_list->SetCellValue(m_proc_list->GetRows()-1, 0,
+    if (m_rows_count == m_rows_using++)
+    {
+        m_proc_list->AppendRows();
+        m_rows_count++;
+    }
+
+    m_proc_list->SetCellValue(m_rows_using-1, 0,
                               pi.id);
-    m_proc_list->SetCellValue(m_proc_list->GetRows()-1, 1,
+    m_proc_list->SetCellValue(m_rows_using-1, 1,
                               pi.name);
-    m_proc_list->SetCellValue(m_proc_list->GetRows()-1, 2,
+    m_proc_list->SetCellValue(m_rows_using-1, 2,
                               pi.path);
 }
