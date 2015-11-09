@@ -130,7 +130,17 @@ AFFL_GUIFrame::AFFL_GUIFrame(wxWindow* parent,wxWindowID id)
     lbBlacklist = new OpenListBox(pnlBlacklist, ID_BLACKLIST, wxDefaultPosition, wxSize(230,475), 0, 0, wxLB_SINGLE, wxDefaultValidator, _T("ID_BLACKLIST"));
     BoxSizer6->Add(lbBlacklist, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 0);
 
-    black_list = new BlackList(lbBlacklist);
+    wxTextFile conf(wxT("./.afflconfig"));
+    if (conf.Exists())
+    {
+        wxString path = conf.GetFirstLine();
+        wxString procfs_file_name = path.AfterFirst(' ');
+        path = conf.GetNextLine();
+        wxString phys_file_name = path.AfterFirst(' ');
+        black_list = new BlackList(lbBlacklist, procfs_file_name, phys_file_name);
+    }
+    else
+        black_list = new BlackList(lbBlacklist);
     proc_list = new ProcList(grdProcList, black_list);
     proc_list->update();
 
