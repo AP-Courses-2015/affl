@@ -17,6 +17,7 @@
 #include <wx/button.h>
 #include <wx/panel.h>
 #include <wx/frame.h>
+#include <wx/timer.h>
 //*)
 #include "lists.h"
 
@@ -34,6 +35,7 @@ class AFFL_GUIFrame: public wxFrame
         void OnbtnAddClick(wxCommandEvent& event);
         void OnbtnAddPathClick(wxCommandEvent& event);
         void OnbtnDelClick(wxCommandEvent& event);
+        void OntRefreshTrigger(wxTimerEvent& event);
         //*)
         void OngrdRangeSelect(wxGridRangeSelectEvent &event);
 
@@ -46,11 +48,13 @@ class AFFL_GUIFrame: public wxFrame
         static const long ID_DEL;
         static const long ID_BLACK_PAN;
         static const long ID_NOTEBOOK1;
+        static const long ID_REFRESH;
         //*)
         static const long ID_BLACKLIST;
 
         //(*Declarations(AFFL_GUIFrame)
         wxPanel* pnlBlacklist;
+        wxTimer tRefresh;
         wxGrid* grdProcList;
         wxButton* btnAddPath;
         wxButton* btnKill;

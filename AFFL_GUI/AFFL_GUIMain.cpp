@@ -50,6 +50,7 @@ const long AFFL_GUIFrame::ID_ADD_PATH = wxNewId();
 const long AFFL_GUIFrame::ID_DEL = wxNewId();
 const long AFFL_GUIFrame::ID_BLACK_PAN = wxNewId();
 const long AFFL_GUIFrame::ID_NOTEBOOK1 = wxNewId();
+const long AFFL_GUIFrame::ID_REFRESH = wxNewId();
 //*)
 const long AFFL_GUIFrame::ID_BLACKLIST = wxNewId();
 
@@ -114,13 +115,13 @@ AFFL_GUIFrame::AFFL_GUIFrame(wxWindow* parent,wxWindowID id)
     Notebook1->AddPage(pnlBlacklist, _("Blacklist"), false);
     BoxSizer1->Add(Notebook1, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 0);
     SetSizer(BoxSizer1);
+    tRefresh.SetOwner(this, ID_REFRESH);
+    tRefresh.Start(1000, false);
     BoxSizer1->Fit(this);
     BoxSizer1->SetSizeHints(this);
 
-    Connect(ID_ADD,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&AFFL_GUIFrame::OnbtnAddClick);
     Connect(ID_KILL,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&AFFL_GUIFrame::OnbtnKillClick);
-    Connect(ID_ADD_PATH,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&AFFL_GUIFrame::OnbtnAddPathClick);
-    Connect(ID_DEL,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&AFFL_GUIFrame::OnbtnDelClick);
+    Connect(ID_REFRESH,wxEVT_TIMER,(wxObjectEventFunction)&AFFL_GUIFrame::OntRefreshTrigger);
     //*)
     Connect(ID_PROC_LIST, wxEVT_GRID_RANGE_SELECT, (wxObjectEventFunction)&AFFL_GUIFrame::OngrdRangeSelect);
 
@@ -165,4 +166,9 @@ void AFFL_GUIFrame::OnbtnAddPathClick(wxCommandEvent& event)
 void AFFL_GUIFrame::OnbtnDelClick(wxCommandEvent& event)
 {
     black_list->delSelected();
+}
+
+void AFFL_GUIFrame::OntRefreshTrigger(wxTimerEvent& event)
+{
+    proc_list->update();
 }
