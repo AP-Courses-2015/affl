@@ -16,9 +16,10 @@ void BlackList::delSelected()
 
 void ProcList::killSelected()
 {
-    wxString id = getSelectedProcInfo().id;
+    long id;
+    getSelectedProcInfo().id.ToLong(&id);
 
-    wxShell(wxString::Format("kill %s", id));
+    kill(id, SIGKILL);
 
     update();
 }
@@ -62,7 +63,6 @@ void ProcList::update()
         long id;
         if (!next_dir.ToLong(&id))
             continue;
-
 
         ProcInfo pi = getProcInfo(dir, next_dir);
         //If we have path to binary file, then add to list
