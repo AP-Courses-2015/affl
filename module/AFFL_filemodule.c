@@ -10,16 +10,23 @@
 #include <linux/fs.h>
 #include <linux/file.h>
 #include <linux/slab.h>
+#include <linux/list.h>
 #include <linux/seq_file.h>
 #include "AFFL_filemodule.h"
 #define PROCFS_NAME 		"blist"
-#define BlackList "/home/natali/module/AFFL_blacklist"
+#define BlackList "/home/natali/modu/AFFL_blacklist"
 #define MYDIRPROC "Firewall"
 #define MYPROC "/proc/Firewall/blist"
+
+#define DEBUG
+
 /**
  * This structure hold information about the /proc file
  *
  */
+
+
+
 static struct proc_dir_entry *Our_Proc_Dir;
 static struct proc_dir_entry *Our_Proc_File;
 static struct file *fileproc;
@@ -28,7 +35,8 @@ static struct file *fileproc;
  *
  */
 static char* procfs_buffer;
-static loff_t last_pos;
+static int last_pos;
+
 /**
  * The size of the buffer
  *
@@ -51,22 +59,27 @@ int read_callback(struct seq_file *m, void *v)
  *
  */
 
-size_t write_callback(struct file *file, const char * buffer, size_t count, int* pos) 
-{	
+size_t write_callback(struct file* file, const char __user* buffer, size_t count, int* pos)
+{
 	int res;
-	if(copy_from_user(&procfs_buffer[*pos], buffer, count))
+    	if(last_pos==0)
 	{
-                return -EFAULT;
+		if(copy_from_user(&procfs_buffer[*pos], buffer, count))
+		{
+              	  return -EFAULT;
+		}
 	}
 	
-	if(*pos!=0)
+	else
 	{
-		res=(int) (count+(*pos));
-		procfs_buffer[res]='\n';
-		procfs_buffer[res+1]='\0';
-		last_pos=res+1;
+		if(copy_from_user(&procfs_buffer[last_pos], buffer, count))
+			 return -EFAULT;
+		res = (int)(count+last_pos);
+		last_pos= res;
+		
 	}
-        return count;
+   
+     return count; // Return number of bytes passed by the user
 }
 
 int open_callback(struct inode *inode, struct file *file){
@@ -96,12 +109,14 @@ int initBlackList(void)
 	{
    		return -EBADF;
 	}
+
 	buf = (char*) kmalloc(buf_len, GFP_KERNEL);
 	if (buf == NULL)
 	{
  	   filp_close(fileread, 0);
   	   return -ENOMEM;
 	} 
+
 	Our_Proc_Dir = proc_mkdir(MYDIRPROC,NULL);
 	Our_Proc_File = proc_create(PROCFS_NAME, 0644, Our_Proc_Dir,&proc_file_fops);
 	
@@ -111,30 +126,33 @@ int initBlackList(void)
 			PROCFS_NAME);
 		return -ENOMEM;
 	}
+
 	fs = get_fs();
 	set_fs(KERNEL_DS);
 	pos=0;
 	count=vfs_read(fileread,buf,buf_len,&pos);
-	buf[pos]='\0';
-	last_pos=pos;
-	
+	buf[pos] = '\0';
 	fileproc=filp_open(MYPROC,O_RDWR,0);
 	if (IS_ERR(fileproc))
 	{
-		printk("%sFile don't open in /proc\n");
+		printk("File don't open in /proc\n");
    		return -EBADF;
 	}
+
 	procfs_buffer = (char*) kmalloc(buf_len, GFP_KERNEL);
 	if (procfs_buffer == NULL)
 	{
  	   filp_close(fileproc, 0);
   	   return -ENOMEM;
 	} 
-	pos=0;
-	vfs_write(fileproc,buf,buf_len,&pos);
+
+	last_pos=0;
+	vfs_write(fileproc,buf,buf_len,&last_pos);
 	kfree(buf);
-	filp_close(fileread,0);
-	set_fs(fs);		
+	filp_close(fileread,0);	
+	set_fs(fs);
+	last_pos=pos;
+	return 0;
 }
 
 int findProcInBlackList(const char*name)
@@ -144,21 +162,25 @@ int findProcInBlackList(const char*name)
 	int res;
 	pos=0;
 	start=0;
+
 	while(procfs_buffer[pos]!='\0')
 	{
 		if(procfs_buffer[pos]=='\n')
 		{
 			res=strncmp(name,&procfs_buffer[start],pos-start);
+
 			if(res==0)
 			{
-			   printk("found:%i",start);
+			   printk("found:%i\n",start);
+
 			   return start;
 			}
 			start=pos+1;
 		}
 		pos++;
 	}
-	return -1;
+
+	return (-1);
 }
 
 
@@ -169,6 +191,8 @@ int releaseBlackList(void)
 	remove_proc_entry(MYDIRPROC,NULL);
 	kfree(procfs_buffer);
 	
+
+	return 1;
 }
 EXPORT_SYMBOL(initBlackList);
 EXPORT_SYMBOL(findProcInBlackList);
