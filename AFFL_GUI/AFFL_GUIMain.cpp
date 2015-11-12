@@ -120,7 +120,10 @@ AFFL_GUIFrame::AFFL_GUIFrame(wxWindow* parent,wxWindowID id)
     BoxSizer1->Fit(this);
     BoxSizer1->SetSizeHints(this);
 
+    Connect(ID_ADD,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&AFFL_GUIFrame::OnbtnAddClick);
     Connect(ID_KILL,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&AFFL_GUIFrame::OnbtnKillClick);
+    Connect(ID_ADD_PATH,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&AFFL_GUIFrame::OnbtnAddPathClick);
+    Connect(ID_DEL,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&AFFL_GUIFrame::OnbtnDelClick);
     Connect(ID_REFRESH,wxEVT_TIMER,(wxObjectEventFunction)&AFFL_GUIFrame::OntRefreshTrigger);
     Connect(wxEVT_SET_FOCUS,(wxObjectEventFunction)&AFFL_GUIFrame::OnSetFocus);
     Connect(wxEVT_KILL_FOCUS,(wxObjectEventFunction)&AFFL_GUIFrame::OnKillFocus);
@@ -131,6 +134,8 @@ AFFL_GUIFrame::AFFL_GUIFrame(wxWindow* parent,wxWindowID id)
     BoxSizer6->Add(lbBlacklist, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 0);
 
     wxTextFile conf(wxT("./.afflconfig"));
+    //App crash if timer works while blacklist initializing
+    tRefresh.Stop();
     if (conf.Exists())
     {
         wxString path = conf.GetFirstLine();
@@ -143,8 +148,7 @@ AFFL_GUIFrame::AFFL_GUIFrame(wxWindow* parent,wxWindowID id)
         black_list = new BlackList(lbBlacklist);
     proc_list = new ProcList(grdProcList, black_list);
     proc_list->update();
-
-    //grdProcList->GetSelected
+    tRefresh.Start();
 }
 
 AFFL_GUIFrame::~AFFL_GUIFrame()

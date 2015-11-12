@@ -13,9 +13,9 @@
 #include <linux/seq_file.h>
 #include "AFFL_filemodule.h"
 #define PROCFS_NAME 		"blist"
-#define BlackList "/home/mizantrop/C/apriorit_project/module/AFFL_blacklist"
-#define MYDIRPROC "Firewall"
-#define MYPROC "/proc/Firewall/blist"
+#define BlackList "/home/mizantrop/C/apriorit_project/module/blacklist.lst"
+#define MYDIRPROC "affl"
+#define MYPROC "/proc/affl/blist"
 
 #define DEBUG
 
@@ -56,12 +56,18 @@ int read_callback(struct seq_file *m, void *v)
 
 size_t write_callback(struct file *file, const char * buffer, size_t count, int* pos) 
 {	
+#ifdef DEBUG
+  printk(KERN_NOTICE "AFFL_filemodule notice: writing started\n");
+#endif
 	int res;
 	if(copy_from_user(&procfs_buffer[*pos], buffer, count))
 	{
                 return -EFAULT;
 	}
 	
+#ifdef DEBUG
+  printk(KERN_NOTICE "AFFL_filemodule notice: data from user taked\n");
+#endif
 	if(*pos!=0)
 	{
 		res=(int) (count+(*pos));
@@ -69,6 +75,9 @@ size_t write_callback(struct file *file, const char * buffer, size_t count, int*
 		procfs_buffer[res+1]='\0';
 		last_pos=res+1;
 	}
+#ifdef DEBUG
+  printk(KERN_NOTICE "AFFL_filemodule notice: %i bytes was writen\n", count);
+#endif
         return count;
 }
 

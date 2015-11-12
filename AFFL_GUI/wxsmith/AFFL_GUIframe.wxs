@@ -37,6 +37,7 @@
 											<object class="wxButton" name="ID_ADD" variable="btnAdd" member="yes">
 												<label>Add to blacklist</label>
 												<size>129,27</size>
+												<handler function="OnbtnAddClick" entry="EVT_BUTTON" />
 											</object>
 											<flag>wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
 											<option>1</option>
@@ -78,6 +79,7 @@
 											<object class="wxButton" name="ID_ADD_PATH" variable="btnAddPath" member="yes">
 												<label>Add by path</label>
 												<size>126,27</size>
+												<handler function="OnbtnAddPathClick" entry="EVT_BUTTON" />
 											</object>
 											<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
 											<option>1</option>
@@ -92,6 +94,7 @@
 											<object class="wxButton" name="ID_DEL" variable="btnDel" member="yes">
 												<label>Delete </label>
 												<size>127,27</size>
+												<handler function="OnbtnDelClick" entry="EVT_BUTTON" />
 											</object>
 											<flag>wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL</flag>
 											<option>1</option>

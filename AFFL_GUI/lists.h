@@ -5,12 +5,13 @@
 #include <wx/dir.h>
 #include <wx/textfile.h>
 #include <wx/grid.h>
+#include <wx/process.h>
 #include <memory>
 
 namespace
 {
-    const wxString DEFAULT_PROCFS_FILE_NAME = wxT("/proc/affl/blacklist");
-    const wxString DEFAULT_PHIS_FILE_NAME = wxT("/home/root/.affl/blacklist.lst");
+    const wxString DEFAULT_PROCFS_FILE_NAME = wxT("/proc/affl/blist");
+    const wxString DEFAULT_PHIS_FILE_NAME = wxT("/home/mizantrop/C/apriorit_project/module/blacklist.lst");
 
     struct ProcInfo
     {
@@ -66,7 +67,7 @@ class BlackList
         BlackList(OpenListBox *black_list,
                   const wxString &procfs_file_name = DEFAULT_PROCFS_FILE_NAME,
                   const wxString &phys_file_name = DEFAULT_PHIS_FILE_NAME)
-        : m_black_list(black_list), m_procfs_file(procfs_file_name), m_phys_file(phis_file_name)
+        : m_black_list(black_list), m_procfs_file(procfs_file_name), m_phys_file(phys_file_name)
         {
             init();
         }

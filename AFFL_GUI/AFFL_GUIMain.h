@@ -38,6 +38,7 @@ class AFFL_GUIFrame: public wxFrame
         void OntRefreshTrigger(wxTimerEvent& event);
         void OnKillFocus(wxFocusEvent& event);
         void OnSetFocus(wxFocusEvent& event);
+        void OnbtnDelClick1(wxCommandEvent& event);
         //*)
         void OngrdRangeSelect(wxGridRangeSelectEvent &event);
 

@@ -1,20 +1,25 @@
 #include "lists.h"
-#include <memory>
 
 void BlackList::init()
 {
     if (!m_procfs_file.Exists())
         wxMessageBox(wxT("Can't open blacklist file in procfs"), wxT("Error"),
                      wxOK | wxCENTER | wxICON_ERROR);
+    else
+        m_procfs_file.Open();
+
     if (!m_phys_file.Exists())
         wxMessageBox(wxT("Can't open physical file"), wxT("Error"),
                      wxOK | wxCENTER | wxICON_ERROR);
+    else
+        m_phys_file.Open();
 
-    for (wxString line = m_phys_file->GetFirstLine(),
-         !m_phys_file->Eof(),
-         line = m_phys_file->GetNextLine())
+    wxString line;
+    for (wxString line = m_phys_file.GetFirstLine();
+         !m_phys_file.Eof();
+         line = m_phys_file.GetNextLine())
     {
-        m_black_list->AppendAndEnsureVisible(path);
+        m_black_list->AppendAndEnsureVisible(line);
     }
 }
 
@@ -22,15 +27,19 @@ void BlackList::addByPath(const wxString &path)
 {
     if (m_black_list->FindString(path) == wxNOT_FOUND)
         m_black_list->AppendAndEnsureVisible(path);
-    m_phis_file.AddLine(path);
+    m_phys_file.AddLine(path);
     m_procfs_file.AddLine(path);
+    m_phys_file.Write();
+    m_procfs_file.Write();
 }
 
 void BlackList::delSelected()
 {
     m_procfs_file.AddLine('k' + m_black_list->GetString(m_black_list->GetSelection()));
-    m_phis_file.RemoveLine(m_black_list->GetSelection());
+    m_phys_file.RemoveLine(m_black_list->GetSelection());
     m_black_list->removeSelected();
+    m_procfs_file.Write();
+    m_phys_file.Write();
 }
 
 //=======================================================================================
@@ -40,7 +49,7 @@ void ProcList::killSelected()
     long id;
     getSelectedProcInfo().id.ToLong(&id);
 
-    kill(id, SIGKILL);
+    wxProcess::Kill(id, wxSIGKILL);
 
     update();
 }
