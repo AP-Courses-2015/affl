@@ -13,7 +13,7 @@
 #include <linux/seq_file.h>
 #include "AFFL_filemodule.h"
 #define PROCFS_NAME 		"blist"
-#define BlackList "/home/mizantrop/C/apriorit_project/module/blacklist.lst"
+#define BlackList "/home/mizantrop/C/apriorit_project/affl/AFFL_GUI/blacklist"
 #define MYDIRPROC "affl"
 #define MYPROC "/proc/affl/blist"
 
@@ -58,6 +58,8 @@ size_t write_callback(struct file *file, const char * buffer, size_t count, int*
 {	
 #ifdef DEBUG
   printk(KERN_NOTICE "AFFL_filemodule notice: writing started\n");
+  printk(KERN_NOTICE "AFFL_filemodule notice: data from user: %s\n", buffer);
+  printk(KERN_NOTICE "AFFL_filemodule notice: size of data from user: %u\n", count);
 #endif
 	int res;
 	if(copy_from_user(&procfs_buffer[*pos], buffer, count))

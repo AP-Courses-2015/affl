@@ -11,7 +11,7 @@
 namespace
 {
     const wxString DEFAULT_PROCFS_FILE_NAME = wxT("/proc/affl/blist");
-    const wxString DEFAULT_PHIS_FILE_NAME = wxT("/home/mizantrop/C/apriorit_project/module/blacklist.lst");
+    const wxString DEFAULT_PHIS_FILE_NAME = wxT("./blacklist.lst");
 
     struct ProcInfo
     {
@@ -57,7 +57,7 @@ class BlackList
 {
     private:
         std::unique_ptr<OpenListBox>m_black_list;
-        wxTextFile m_procfs_file;
+        wxFile m_procfs_file;
         wxTextFile m_phys_file;
 
     private:
@@ -67,7 +67,7 @@ class BlackList
         BlackList(OpenListBox *black_list,
                   const wxString &procfs_file_name = DEFAULT_PROCFS_FILE_NAME,
                   const wxString &phys_file_name = DEFAULT_PHIS_FILE_NAME)
-        : m_black_list(black_list), m_procfs_file(procfs_file_name), m_phys_file(phys_file_name)
+        : m_black_list(black_list), m_procfs_file(procfs_file_name, wxFile::read_write), m_phys_file(phys_file_name)
         {
             init();
         }

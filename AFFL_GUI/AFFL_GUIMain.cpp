@@ -51,6 +51,7 @@ const long AFFL_GUIFrame::ID_DEL = wxNewId();
 const long AFFL_GUIFrame::ID_BLACK_PAN = wxNewId();
 const long AFFL_GUIFrame::ID_NOTEBOOK1 = wxNewId();
 const long AFFL_GUIFrame::ID_REFRESH = wxNewId();
+const long AFFL_GUIFrame::ID_PASSWORDE = wxNewId();
 //*)
 const long AFFL_GUIFrame::ID_BLACKLIST = wxNewId();
 
@@ -117,6 +118,8 @@ AFFL_GUIFrame::AFFL_GUIFrame(wxWindow* parent,wxWindowID id)
     SetSizer(BoxSizer1);
     tRefresh.SetOwner(this, ID_REFRESH);
     tRefresh.Start(1000, false);
+    fdAddByPath = new wxFileDialog(this, _("Select file"), wxEmptyString, wxEmptyString, wxFileSelectorDefaultWildcardStr, wxFD_DEFAULT_STYLE, wxDefaultPosition, wxDefaultSize, _T("wxFileDialog"));
+    pedPassword = new wxPasswordEntryDialog(this, _("Please, enter your root password"), _("Need root password"), wxEmptyString, wxCANCEL|wxCENTRE|wxOK, wxDefaultPosition);
     BoxSizer1->Fit(this);
     BoxSizer1->SetSizeHints(this);
 
@@ -125,27 +128,22 @@ AFFL_GUIFrame::AFFL_GUIFrame(wxWindow* parent,wxWindowID id)
     Connect(ID_ADD_PATH,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&AFFL_GUIFrame::OnbtnAddPathClick);
     Connect(ID_DEL,wxEVT_COMMAND_BUTTON_CLICKED,(wxObjectEventFunction)&AFFL_GUIFrame::OnbtnDelClick);
     Connect(ID_REFRESH,wxEVT_TIMER,(wxObjectEventFunction)&AFFL_GUIFrame::OntRefreshTrigger);
+    Connect(wxID_ANY,wxEVT_CLOSE_WINDOW,(wxObjectEventFunction)&AFFL_GUIFrame::OnClose);
     Connect(wxEVT_SET_FOCUS,(wxObjectEventFunction)&AFFL_GUIFrame::OnSetFocus);
     Connect(wxEVT_KILL_FOCUS,(wxObjectEventFunction)&AFFL_GUIFrame::OnKillFocus);
     //*)
     Connect(ID_PROC_LIST, wxEVT_GRID_RANGE_SELECT, (wxObjectEventFunction)&AFFL_GUIFrame::OngrdRangeSelect);
 
+    //App crash if timer works before blacklist init
+    tRefresh.Stop();
+
+    if (!initKernelModule())
+        exit(-1);
+
     lbBlacklist = new OpenListBox(pnlBlacklist, ID_BLACKLIST, wxDefaultPosition, wxSize(230,475), 0, 0, wxLB_SINGLE, wxDefaultValidator, _T("ID_BLACKLIST"));
     BoxSizer6->Add(lbBlacklist, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 0);
 
-    wxTextFile conf(wxT("./.afflconfig"));
-    //App crash if timer works while blacklist initializing
-    tRefresh.Stop();
-    if (conf.Exists())
-    {
-        wxString path = conf.GetFirstLine();
-        wxString procfs_file_name = path.AfterFirst(' ');
-        path = conf.GetNextLine();
-        wxString phys_file_name = path.AfterFirst(' ');
-        black_list = new BlackList(lbBlacklist, procfs_file_name, phys_file_name);
-    }
-    else
-        black_list = new BlackList(lbBlacklist);
+    black_list = new BlackList(lbBlacklist);
     proc_list = new ProcList(grdProcList, black_list);
     proc_list->update();
     tRefresh.Start();
@@ -155,6 +153,20 @@ AFFL_GUIFrame::~AFFL_GUIFrame()
 {
     //(*Destroy(AFFL_GUIFrame)
     //*)
+}
+
+bool AFFL_GUIFrame::initKernelModule()
+{
+    pedPassword->ShowModal();
+    if (pedPassword->GetReturnCode() != wxID_OK)
+        return false;
+    root_pass = pedPassword->GetValue();
+    wxShell(wxT("su"));
+    wxShell(root_pass);
+    wxShell(wxT("insmod AFFL_filemodule.ko"));
+    wxShell(wxT("insmod AFFL_KM.ko"));
+
+    return true;
 }
 
 void AFFL_GUIFrame::OnbtnKillClick(wxCommandEvent& event)
@@ -175,8 +187,8 @@ void AFFL_GUIFrame::OnbtnAddClick(wxCommandEvent& event)
 
 void AFFL_GUIFrame::OnbtnAddPathClick(wxCommandEvent& event)
 {
-    unsigned int str_count = lbBlacklist->GetCount();
-    black_list->addByPath(wxString::Format(wxT("Some string %u"), str_count));
+    fdAddByPath->ShowModal();
+    black_list->addByPath(fdAddByPath->GetPath());
 }
 
 void AFFL_GUIFrame::OnbtnDelClick(wxCommandEvent& event)
@@ -197,4 +209,13 @@ void AFFL_GUIFrame::OnKillFocus(wxFocusEvent& event)
 void AFFL_GUIFrame::OnSetFocus(wxFocusEvent& event)
 {
     tRefresh.Start();
+}
+
+void AFFL_GUIFrame::OnClose(wxCloseEvent& event)
+{
+    wxShell(wxT("rmmod AFFL_filemodule.ko"));
+    wxShell(wxT("rmmod AFFL_KM.ko"));
+    wxShell(wxT("exit"));
+
+    exit(0);
 }

@@ -2,6 +2,7 @@
 <wxsmith>
 	<object class="wxFrame" name="AFFL_GUIFrame">
 		<title>Application firewall</title>
+		<handler function="OnClose" entry="EVT_CLOSE" />
 		<handler function="OnSetFocus" entry="EVT_SET_FOCUS" />
 		<handler function="OnKillFocus" entry="EVT_KILL_FOCUS" />
 		<object class="wxBoxSizer" variable="BoxSizer1" member="no">
@@ -114,6 +115,13 @@
 		<object class="wxTimer" name="ID_REFRESH" variable="tRefresh" member="yes">
 			<interval>1000</interval>
 			<handler function="OntRefreshTrigger" entry="EVT_TIMER" />
+		</object>
+		<object class="wxFileDialog" variable="fdAddByPath" member="yes">
+			<message>Select file</message>
+		</object>
+		<object class="wxPasswordEntryDialog" name="ID_PASSWORDE" variable="pedPassword" member="yes">
+			<caption>Need root password</caption>
+			<message>Please, enter your root password</message>
 		</object>
 	</object>
 </wxsmith>

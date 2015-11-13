@@ -28,6 +28,6 @@ bool AFFL_GUIApp::OnInit()
     	SetTopWindow(Frame);
     }
     //*)
-    return wxsOK;
 
+    return wxsOK;
 }

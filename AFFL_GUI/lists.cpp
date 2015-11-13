@@ -2,17 +2,22 @@
 
 void BlackList::init()
 {
-    if (!m_procfs_file.Exists())
-        wxMessageBox(wxT("Can't open blacklist file in procfs"), wxT("Error"),
-                     wxOK | wxCENTER | wxICON_ERROR);
-    else
-        m_procfs_file.Open();
+    //Template disable automatic errors
+    wxLogNull log_null;
 
     if (!m_phys_file.Exists())
-        wxMessageBox(wxT("Can't open physical file"), wxT("Error"),
+        wxMessageBox(wxT("Can't find physical file"), wxT("Error"),
                      wxOK | wxCENTER | wxICON_ERROR);
     else
         m_phys_file.Open();
+
+    if (!m_phys_file.IsOpened())
+        wxMessageBox(wxT("Can't open physical file"), wxT("Error"),
+                     wxOK | wxCENTER | wxICON_ERROR);
+    if (!m_procfs_file.IsOpened())
+        wxMessageBox(wxT("Can't open blacklist file in procfs"), wxT("Error"),
+                     wxOK | wxCENTER | wxICON_ERROR);
+
 
     wxString line;
     for (wxString line = m_phys_file.GetFirstLine();
@@ -21,24 +26,29 @@ void BlackList::init()
     {
         m_black_list->AppendAndEnsureVisible(line);
     }
+
+    m_phys_file.Clear();
+    for (size_t i = 0; i<m_black_list->GetCount(); i++)
+        m_phys_file.AddLine(m_black_list->GetString(i));
+    m_phys_file.Write();
 }
 
 void BlackList::addByPath(const wxString &path)
 {
     if (m_black_list->FindString(path) == wxNOT_FOUND)
+    {
         m_black_list->AppendAndEnsureVisible(path);
-    m_phys_file.AddLine(path);
-    m_procfs_file.AddLine(path);
-    m_phys_file.Write();
-    m_procfs_file.Write();
+        m_phys_file.AddLine(path);
+        m_procfs_file.Write(path);
+        m_phys_file.Write();
+    }
 }
 
 void BlackList::delSelected()
 {
-    m_procfs_file.AddLine('k' + m_black_list->GetString(m_black_list->GetSelection()));
+    m_procfs_file.Write('k' + m_black_list->GetString(m_black_list->GetSelection()));
     m_phys_file.RemoveLine(m_black_list->GetSelection());
     m_black_list->removeSelected();
-    m_procfs_file.Write();
     m_phys_file.Write();
 }
 

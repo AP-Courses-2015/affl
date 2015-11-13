@@ -11,10 +11,12 @@
 #define AFFL_GUIMAIN_H
 
 //(*Headers(AFFL_GUIFrame)
+#include <wx/textdlg.h>
 #include <wx/grid.h>
 #include <wx/sizer.h>
 #include <wx/notebook.h>
 #include <wx/button.h>
+#include <wx/filedlg.h>
 #include <wx/panel.h>
 #include <wx/frame.h>
 #include <wx/timer.h>
@@ -30,6 +32,8 @@ class AFFL_GUIFrame: public wxFrame
 
     private:
 
+        wxString root_pass;
+
         //(*Handlers(AFFL_GUIFrame)
         void OnbtnKillClick(wxCommandEvent& event);
         void OnbtnAddClick(wxCommandEvent& event);
@@ -39,6 +43,7 @@ class AFFL_GUIFrame: public wxFrame
         void OnKillFocus(wxFocusEvent& event);
         void OnSetFocus(wxFocusEvent& event);
         void OnbtnDelClick1(wxCommandEvent& event);
+        void OnClose(wxCloseEvent& event);
         //*)
         void OngrdRangeSelect(wxGridRangeSelectEvent &event);
 
@@ -52,10 +57,12 @@ class AFFL_GUIFrame: public wxFrame
         static const long ID_BLACK_PAN;
         static const long ID_NOTEBOOK1;
         static const long ID_REFRESH;
+        static const long ID_PASSWORDE;
         //*)
         static const long ID_BLACKLIST;
 
         //(*Declarations(AFFL_GUIFrame)
+        wxFileDialog* fdAddByPath;
         wxPanel* pnlBlacklist;
         wxTimer tRefresh;
         wxGrid* grdProcList;
@@ -64,6 +71,7 @@ class AFFL_GUIFrame: public wxFrame
         wxButton* btnDel;
         wxNotebook* Notebook1;
         wxButton* btnAdd;
+        wxPasswordEntryDialog* pedPassword;
         wxPanel* pnlProcList;
         //*)
         OpenListBox* lbBlacklist;
@@ -72,6 +80,9 @@ class AFFL_GUIFrame: public wxFrame
         BlackList *black_list;
 
         DECLARE_EVENT_TABLE()
+
+    private:
+        bool initKernelModule();
 };
 
 #endif // AFFL_GUIMAIN_H
