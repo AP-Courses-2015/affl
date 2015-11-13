@@ -5,11 +5,10 @@ void BlackList::init()
     //Template disable automatic errors
     wxLogNull log_null;
 
-    if (!m_phys_file.Exists())
-        wxMessageBox(wxT("Can't find physical file"), wxT("Error"),
-                     wxOK | wxCENTER | wxICON_ERROR);
-    else
+    if (m_phys_file.Exists())
         m_phys_file.Open();
+    else
+        m_phys_file.Create();
 
     if (!m_phys_file.IsOpened())
         wxMessageBox(wxT("Can't open physical file"), wxT("Error"),
@@ -25,6 +24,7 @@ void BlackList::init()
          line = m_phys_file.GetNextLine())
     {
         m_black_list->AppendAndEnsureVisible(line);
+        m_procfs_file.Write(line);
     }
 
     m_phys_file.Clear();
@@ -46,7 +46,7 @@ void BlackList::addByPath(const wxString &path)
 
 void BlackList::delSelected()
 {
-    m_procfs_file.Write('k' + m_black_list->GetString(m_black_list->GetSelection()));
+    m_procfs_file.Write(wxString::Format(wxT("k%i"), m_black_list->GetSelection()));
     m_phys_file.RemoveLine(m_black_list->GetSelection());
     m_black_list->removeSelected();
     m_phys_file.Write();
