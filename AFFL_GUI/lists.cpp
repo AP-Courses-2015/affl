@@ -49,6 +49,8 @@ void BlackList::addByPath(const wxString &path)
 
 void BlackList::delSelected()
 {
+    if (m_black_list->GetSelection() == wxNOT_FOUND)
+        return;
     m_procfs_file.Write(wxString::Format(wxT("k%i"), m_black_list->GetSelection()));
     m_phys_file.RemoveLine(m_black_list->GetSelection());
     m_black_list->removeSelected();
@@ -60,6 +62,8 @@ void BlackList::delSelected()
 void ProcList::killSelected()
 {
     long id;
+    if (m_proc_list->GetSelectedRows().Count() == 0)
+        return;
     getSelectedProcInfo().id.ToLong(&id);
 
     wxProcess::Kill(id, wxSIGKILL);
@@ -69,6 +73,8 @@ void ProcList::killSelected()
 
 void ProcList::addSelectedToBlacklist()
 {
+    if (m_proc_list->GetSelectedRows().Count() == 0)
+        return;
     m_black_list->addByPath(getSelectedProcInfo().path);
     killSelected();
 }
