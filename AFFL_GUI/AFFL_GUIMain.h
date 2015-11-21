@@ -11,7 +11,6 @@
 #define AFFL_GUIMAIN_H
 
 //(*Headers(AFFL_GUIFrame)
-#include <wx/textdlg.h>
 #include <wx/grid.h>
 #include <wx/sizer.h>
 #include <wx/notebook.h>
@@ -31,8 +30,6 @@ class AFFL_GUIFrame: public wxFrame
         virtual ~AFFL_GUIFrame();
 
     private:
-
-        wxString root_pass;
 
         //(*Handlers(AFFL_GUIFrame)
         void OnbtnKillClick(wxCommandEvent& event);
@@ -57,7 +54,6 @@ class AFFL_GUIFrame: public wxFrame
         static const long ID_BLACK_PAN;
         static const long ID_NOTEBOOK1;
         static const long ID_REFRESH;
-        static const long ID_PASSWORDE;
         //*)
         static const long ID_BLACKLIST;
 
@@ -71,7 +67,6 @@ class AFFL_GUIFrame: public wxFrame
         wxButton* btnDel;
         wxNotebook* Notebook1;
         wxButton* btnAdd;
-        wxPasswordEntryDialog* pedPassword;
         wxPanel* pnlProcList;
         //*)
         OpenListBox* lbBlacklist;

@@ -51,7 +51,6 @@ const long AFFL_GUIFrame::ID_DEL = wxNewId();
 const long AFFL_GUIFrame::ID_BLACK_PAN = wxNewId();
 const long AFFL_GUIFrame::ID_NOTEBOOK1 = wxNewId();
 const long AFFL_GUIFrame::ID_REFRESH = wxNewId();
-const long AFFL_GUIFrame::ID_PASSWORDE = wxNewId();
 //*)
 const long AFFL_GUIFrame::ID_BLACKLIST = wxNewId();
 
@@ -119,7 +118,6 @@ AFFL_GUIFrame::AFFL_GUIFrame(wxWindow* parent,wxWindowID id)
     tRefresh.SetOwner(this, ID_REFRESH);
     tRefresh.Start(1000, false);
     fdAddByPath = new wxFileDialog(this, _("Select file"), wxEmptyString, wxEmptyString, wxFileSelectorDefaultWildcardStr, wxFD_DEFAULT_STYLE, wxDefaultPosition, wxDefaultSize, _T("wxFileDialog"));
-    pedPassword = new wxPasswordEntryDialog(this, _("Please, enter your root password"), _("Need root password"), wxEmptyString, wxCANCEL|wxCENTRE|wxOK, wxDefaultPosition);
     BoxSizer1->Fit(this);
     BoxSizer1->SetSizeHints(this);
 
@@ -137,8 +135,7 @@ AFFL_GUIFrame::AFFL_GUIFrame(wxWindow* parent,wxWindowID id)
     //App crash if timer works before blacklist init
     tRefresh.Stop();
 
-    if (!initKernelModule())
-        exit(-1);
+    initKernelModule();
 
     lbBlacklist = new OpenListBox(pnlBlacklist, ID_BLACKLIST, wxDefaultPosition, wxSize(230,475), 0, 0, wxLB_SINGLE, wxDefaultValidator, _T("ID_BLACKLIST"));
     BoxSizer6->Add(lbBlacklist, 1, wxALL|wxEXPAND|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 0);
@@ -157,13 +154,6 @@ AFFL_GUIFrame::~AFFL_GUIFrame()
 
 bool AFFL_GUIFrame::initKernelModule()
 {
-    pedPassword->ShowModal();
-    if (pedPassword->GetReturnCode() != wxID_OK)
-        return false;
-    root_pass = pedPassword->GetValue();
-    wxShell(wxT("su"));
-    wxShell(root_pass);
-    wxShell(wxT("insmod AFFL_filemodule.ko"));
     wxShell(wxT("insmod AFFL_KM.ko"));
 
     return true;
@@ -213,9 +203,7 @@ void AFFL_GUIFrame::OnSetFocus(wxFocusEvent& event)
 
 void AFFL_GUIFrame::OnClose(wxCloseEvent& event)
 {
-    wxShell(wxT("rmmod AFFL_filemodule.ko"));
     wxShell(wxT("rmmod AFFL_KM.ko"));
-    wxShell(wxT("exit"));
 
     exit(0);
 }

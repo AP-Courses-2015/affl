@@ -2,21 +2,24 @@
 
 void BlackList::init()
 {
-    //Template disable automatic errors
-    wxLogNull log_null;
-
     if (m_phys_file.Exists())
         m_phys_file.Open();
     else
         m_phys_file.Create();
 
     if (!m_phys_file.IsOpened())
+    {
         wxMessageBox(wxT("Can't open physical file"), wxT("Error"),
                      wxOK | wxCENTER | wxICON_ERROR);
+        exit(-1);
+    }
+
     if (!m_procfs_file.IsOpened())
+    {
         wxMessageBox(wxT("Can't open blacklist file in procfs"), wxT("Error"),
                      wxOK | wxCENTER | wxICON_ERROR);
-
+        exit(-1);
+    }
 
     wxString line;
     for (wxString line = m_phys_file.GetFirstLine();

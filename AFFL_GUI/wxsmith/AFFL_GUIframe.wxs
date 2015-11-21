@@ -119,9 +119,5 @@
 		<object class="wxFileDialog" variable="fdAddByPath" member="yes">
 			<message>Select file</message>
 		</object>
-		<object class="wxPasswordEntryDialog" name="ID_PASSWORDE" variable="pedPassword" member="yes">
-			<caption>Need root password</caption>
-			<message>Please, enter your root password</message>
-		</object>
 	</object>
 </wxsmith>
