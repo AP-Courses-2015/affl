@@ -24,12 +24,8 @@ static int S[64] = {7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 2
                     4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,  4, 11, 16, 23,
                     6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21,  6, 10, 15, 21};
 
-static uint32_t A = 0x67452301,
-                B = 0xefcdab89,
-                C = 0x98badcfe,
-                D = 0x10325476;
-
 static int f_id;
+static uint64_t len = 0;
 
 static inline void le2be(void *src, void *dst)
 {
@@ -49,12 +45,11 @@ static void resultToString(uint32_t A, uint32_t B, uint32_t C, uint32_t D, char 
 
 static inline int getNextBlock(char *block)
 {
-    static uint64_t len = 0;
-
     int res;
 
     if ((res = read(f_id, block, MD5_BLOCK_SIZE)) < MD5_BLOCK_SIZE)
     {
+        if (res == -1)  return -1;
         len += res;
         len *= 8;
 
@@ -82,12 +77,17 @@ static inline uint32_t funcI(uint32_t X, uint32_t Y, uint32_t Z) {return Y^(~Z|X
 
 int makeHash(const char *path_to_file, char *hash_result)
 {
+    uint32_t A = 0x67452301,
+             B = 0xefcdab89,
+             C = 0x98badcfe,
+             D = 0x10325476;
     char block[MD5_BLOCK_SIZE];
     int bytes_read;
     uint32_t *X;
     uint32_t tmp_A, tmp_B, tmp_C, tmp_D;
     uint32_t R;
     int j;
+    len = 0;
 
     if ((f_id = open(path_to_file, O_RDONLY)) <= 0)
         return -1;
@@ -95,6 +95,9 @@ int makeHash(const char *path_to_file, char *hash_result)
     do
     {
         bytes_read = getNextBlock(block);
+        if (bytes_read == -1)
+            return -1;
+
         X = (uint32_t *)block;
 
         tmp_A = A; tmp_B = B; tmp_C = C; tmp_D = D;

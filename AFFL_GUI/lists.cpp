@@ -18,7 +18,7 @@ void BlackList::init()
     {
         wxMessageBox(wxT("Can't open blacklist file in procfs"), wxT("Error"),
                      wxOK | wxCENTER | wxICON_ERROR);
-        exit(-1);
+        //exit(-1);
     }
 
     wxString line;
@@ -38,11 +38,11 @@ void BlackList::init()
 
 void BlackList::addByPath(const wxString &path)
 {
-    char hash_value[16];
+    char hash_value[33];
     const char *c_path = path.c_str().AsChar();
     if (makeHash(c_path, hash_value))
     {
-        wxMessageBox(wxT("Can't open file"), wxT("Error"),
+        wxMessageBox(wxT("Can't read file"), wxT("Error"),
                      wxOK | wxCENTER | wxICON_ERROR);
     }
 
