@@ -49,7 +49,6 @@ void BlackList::init()
 
         m_black_list->AppendAndEnsureVisible(name.GetFullPath());
         m_procfs_file.Write(name.GetFullPath());
-        m_procfs_file.Write(hash_value);
     }
 
     m_phys_file.Clear();
@@ -75,7 +74,6 @@ void BlackList::addByPath(const wxString &path)
         m_phys_file.AddLine(phys_file_entry);
         m_phys_file.Write();
         m_procfs_file.Write(path);
-        m_procfs_file.Write(hash_value);
     }
 }
 
