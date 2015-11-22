@@ -169,9 +169,9 @@ int findProcInBlackList(const char*name)
 {
 	TBlackList *elem;
 	char hash_value[HASH_VALUE_SIZE + 1];
+	makeHash(name, hash_value);
 	list_for_each_entry(elem, &mlist.list, list)
     	{
-		makeHash(name, hash_value);
 		if(strcmp(elem->inf,hash_value) == 0)
 		{
 			printk(KERN_INFO "found string %s",name);
