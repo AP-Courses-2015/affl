@@ -6,6 +6,8 @@
 #include <wx/textfile.h>
 #include <wx/grid.h>
 #include <wx/process.h>
+#include <wx/filename.h>
+#include <wx/vector.h>
 #include <memory>
 
 extern "C" {

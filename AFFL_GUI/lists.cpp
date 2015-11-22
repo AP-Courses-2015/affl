@@ -1,5 +1,14 @@
 #include "lists.h"
 
+    /*
+    Проверяется наличие файлов с черным списком.
+
+    Проверяются и заносятся в список заблокированные бинарники.
+    Проверяется только наличие хэша и не является ли имя - именем папки.
+    Валидность хэша не проверяется в связи с тем, что бинарник могли переименовать и
+    новое имя файла может быть неизвестно.
+    После этого файл очищается и все валидные записи заносятся обратно
+    */
 void BlackList::init()
 {
     if (m_phys_file.Exists())
@@ -18,21 +27,34 @@ void BlackList::init()
     {
         wxMessageBox(wxT("Can't open blacklist file in procfs"), wxT("Error"),
                      wxOK | wxCENTER | wxICON_ERROR);
-        //exit(-1);
+        exit(-1);
     }
 
-    wxString line;
+    wxVector<wxString> values;
+    wxFileName name;
+    wxString hash_value;
     for (wxString line = m_phys_file.GetFirstLine();
          !m_phys_file.Eof();
          line = m_phys_file.GetNextLine())
     {
-        m_black_list->AppendAndEnsureVisible(line);
-        m_procfs_file.Write(line);
+        size_t name_length;
+        if ((name_length = line.find(':')) == wxString::npos)
+            continue;
+
+        values.push_back(line);
+        name = line.substr(0, name_length);
+        hash_value = line.substr(name_length+1);
+        if (name.IsDir())
+            continue;
+
+        m_black_list->AppendAndEnsureVisible(name.GetFullPath());
+        m_procfs_file.Write(name.GetFullPath());
+        m_procfs_file.Write(hash_value);
     }
 
     m_phys_file.Clear();
-    for (size_t i = 0; i<m_black_list->GetCount(); i++)
-        m_phys_file.AddLine(m_black_list->GetString(i));
+    for (wxVector<wxString>::iterator it = values.begin(); it != values.end(); it++)
+        m_phys_file.AddLine(*it);
     m_phys_file.Write();
 }
 
@@ -46,12 +68,14 @@ void BlackList::addByPath(const wxString &path)
                      wxOK | wxCENTER | wxICON_ERROR);
     }
 
+    wxString phys_file_entry(path + ":" + hash_value);
     if (m_black_list->FindString(hash_value) == wxNOT_FOUND)
     {
-        m_black_list->AppendAndEnsureVisible(hash_value);
-        m_phys_file.AddLine(hash_value);
-        m_procfs_file.Write(hash_value);
+        m_black_list->AppendAndEnsureVisible(path);
+        m_phys_file.AddLine(phys_file_entry);
         m_phys_file.Write();
+        m_procfs_file.Write(path);
+        m_procfs_file.Write(hash_value);
     }
 }
 
