@@ -71,7 +71,14 @@ int findProcAndDel(long pos)
 
 int read_callback(struct seq_file *m, void *v)
 {
-        seq_printf(m,"%s\n",procfs_buffer);
+        TBlackList *elem;
+	list_for_each_entry(elem, &mlist.list, list)
+    	{
+		
+		
+		seq_printf(m,"%s \n",elem->inf);
+
+	}
         return 0;
 }
 
@@ -98,6 +105,7 @@ size_t write_callback(struct file* file, const char __user* buffer, size_t count
 		//INIT_LIST_HEAD(&elem->list);
 		list_add_tail(&(elem->list),&(mlist.list));
 		printk(KERN_INFO "add: %s", elem->inf);
+		
 	}
 	else
 	{	while(i<=count)
@@ -165,8 +173,9 @@ int findProcInBlackList(const char*name)
 			printk(KERN_INFO "found string %s",name);
 			return 0;
 		}
-		
 	}
+	
+	printk(KERN_INFO "don't found string %s",name);
 	return -1;
 }
 
