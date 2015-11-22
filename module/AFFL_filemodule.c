@@ -10,12 +10,14 @@
 #include <linux/fs.h>
 #include <linux/file.h>
 #include <linux/slab.h>
+#include <linux/list.h>
 #include <linux/seq_file.h>
-#include "AFFL_filemodule.h"
+#include "md5.h"
+#define MAX_STR_LEN 255
 #define PROCFS_NAME 		"blist"
-#define BlackList "/home/mizantrop/C/apriorit_project/affl/AFFL_GUI/blacklist"
 #define MYDIRPROC "affl"
 #define MYPROC "/proc/affl/blist"
+#define HASH_VALUE_SIZE 32
 
 #define DEBUG
 
@@ -23,28 +25,62 @@
  * This structure hold information about the /proc file
  *
  */
+
+
+
 static struct proc_dir_entry *Our_Proc_Dir;
 static struct proc_dir_entry *Our_Proc_File;
-static struct file *fileproc;
+
+typedef struct TBlackList
+{
+	 char* inf; 
+	 struct list_head list; /* kernel's list structure */
+}TBlackList;
+
+TBlackList mlist;
+
+
+char *buf;
+
 /**
  * The buffer used to store character for this module
  *
  */
 static char* procfs_buffer;
-static loff_t last_pos;
-/**
- * The size of the buffer
- *
- */
-char *buf;
+
 /** 
  * This function is called then the /proc file is read
  *
  */
- 
+int findProcAndDel(long pos)
+{
+	TBlackList *elem;
+	long counter=0;
+	list_for_each_entry(elem, &mlist.list, list)
+    	{
+		if(pos==counter)
+		{
+			 printk(KERN_INFO "deleted %s", elem->inf);
+			 list_del(&elem->list);
+        		 kfree(elem);
+			 return 1;
+		}
+		counter++;	
+	}
+
+	return 0;
+} 
+
 int read_callback(struct seq_file *m, void *v)
 {
-        seq_printf(m,"%s\n",procfs_buffer);
+        TBlackList *elem;
+	list_for_each_entry(elem, &mlist.list, list)
+    	{
+		
+		
+		seq_printf(m,"%s \n",elem->inf);
+
+	}
         return 0;
 }
 
@@ -54,33 +90,37 @@ int read_callback(struct seq_file *m, void *v)
  *
  */
 
-size_t write_callback(struct file *file, const char * buffer, size_t count, int* pos) 
-{	
-#ifdef DEBUG
-  printk(KERN_NOTICE "AFFL_filemodule notice: writing started\n");
-  printk(KERN_NOTICE "AFFL_filemodule notice: data from user: %s\n", buffer);
-  printk(KERN_NOTICE "AFFL_filemodule notice: size of data from user: %u\n", count);
-#endif
-	int res;
-	if(copy_from_user(&procfs_buffer[*pos], buffer, count))
-	{
-                return -EFAULT;
-	}
+size_t write_callback(struct file* file, const char __user* buffer, size_t count, int* pos)
+{
+	TBlackList *elem;
+	long res;
+	int i=0;
+	char mystr[10];
+	buf=(char*) kmalloc(sizeof(char)*MAX_STR_LEN,GFP_USER);
 	
-#ifdef DEBUG
-  printk(KERN_NOTICE "AFFL_filemodule notice: data from user taked\n");
-#endif
-	if(*pos!=0)
+	if(buffer[0]!='k')
 	{
-		res=(int) (count+(*pos));
-		procfs_buffer[res]='\n';
-		procfs_buffer[res+1]='\0';
-		last_pos=res+1;
+		buf[count]='\0';
+		memcpy(buf,buffer,count);
+		elem=(TBlackList*)kmalloc(sizeof(TBlackList),GFP_KERNEL);
+		elem->inf=buf;
+		//INIT_LIST_HEAD(&elem->list);
+		list_add_tail(&(elem->list),&(mlist.list));
+		printk(KERN_INFO "add: %s", elem->inf);
+		
 	}
-#ifdef DEBUG
-  printk(KERN_NOTICE "AFFL_filemodule notice: %i bytes was writen\n", count);
-#endif
-        return count;
+	else
+	{	while(i<=count)
+		{
+			mystr[i] = buffer[i+1];
+			i++;
+		}
+		mystr[count-1]='\0';
+		kstrtol(mystr,10,&res);
+		if(findProcAndDel(res)==1)
+			printk(KERN_INFO "Element deleted");
+	}
+     return count; // Return number of bytes passed by the user
 }
 
 int open_callback(struct inode *inode, struct file *file){
@@ -100,138 +140,65 @@ static const struct file_operations proc_file_fops = {
 
 int initBlackList(void)
 {
-	struct file *fileread;
-	unsigned long count;
-	mm_segment_t fs;
-	loff_t pos;
 	size_t buf_len=4096;
-	fileread=filp_open(BlackList,O_RDWR|O_CREAT,0644);
-	if (IS_ERR(fileread))
-	{
-   		return -EBADF;
-	}
-#ifdef DEBUG
-	else
-	  printk(KERN_NOTICE "AFFL_filemodule notice: blacklist opened success\n");
-#endif
-	buf = (char*) kmalloc(buf_len, GFP_KERNEL);
-	if (buf == NULL)
-	{
- 	   filp_close(fileread, 0);
-  	   return -ENOMEM;
-	} 
-#ifdef DEBUG
-	else
-	  printk(KERN_NOTICE "AFFL_filemodule notice: buffer alocated success\n");
-#endif
-	Our_Proc_Dir = proc_mkdir(MYDIRPROC,NULL);
-	Our_Proc_File = proc_create(PROCFS_NAME, 0644, Our_Proc_Dir,&proc_file_fops);
 	
-	if (Our_Proc_File == NULL) {
+	Our_Proc_Dir = proc_mkdir(MYDIRPROC,NULL);
+	Our_Proc_File = proc_create(PROCFS_NAME, 0666, Our_Proc_Dir,&proc_file_fops);
+	
+	if (Our_Proc_File == NULL) 
+	{
 		remove_proc_entry(PROCFS_NAME, NULL);
 		printk(KERN_ALERT "Error: Could not initialize /proc/%s\n",
 			PROCFS_NAME);
 		return -ENOMEM;
 	}
-#ifdef DEBUG
-	else
-	  printk(KERN_NOTICE "AFFL_filemodule notice: procfs file created success\n");
-#endif
-	fs = get_fs();
-	set_fs(KERNEL_DS);
-	pos=0;
-	count=vfs_read(fileread,buf,buf_len,&pos);
-	buf[pos++]='\n';
-	buf[pos] = '\0';
-	last_pos=pos;
-	
-	fileproc=filp_open(MYPROC,O_RDWR,0);
-	if (IS_ERR(fileproc))
-	{
-		printk("File don't open in /proc\n");
-   		return -EBADF;
-	}
-#ifdef DEBUG
-	else
-	  printk(KERN_NOTICE "AFFL_filemodule notice: procfs file opened success\n");
-#endif
+
 	procfs_buffer = (char*) kmalloc(buf_len, GFP_KERNEL);
 	if (procfs_buffer == NULL)
 	{
- 	   filp_close(fileproc, 0);
   	   return -ENOMEM;
 	} 
-#ifdef DEBUG
-	else
-	  printk(KERN_NOTICE "AFFL_filemodule notice: procfs buffer allocated success\n");
-#endif
-	pos=0;
-	vfs_write(fileproc,buf,buf_len,&pos);
-	kfree(buf);
-	filp_close(fileread,0);
-	set_fs(fs);	
-	
+	INIT_LIST_HEAD(&mlist.list); 
+
 	return 0;
 }
 
+
+
 int findProcInBlackList(const char*name)
 {
-	int pos;
-	int start;
-	int res;
-	pos=0;
-	start=0;
-#ifdef DEBUG
-	char debug_buffer[100];
-	int debug_pointer = 0;
-	printk(KERN_NOTICE "AFFL_filemodule notice: try to find proc named %s\n", name);
-#endif
-	while(procfs_buffer[pos]!='\0')
-	{
-#ifdef DEBUG
-		debug_buffer[debug_pointer++] = procfs_buffer[pos];
-		debug_buffer[debug_pointer] = '\0';
-#endif
-		if(procfs_buffer[pos]=='\n')
+	TBlackList *elem;
+	char hash_value[HASH_VALUE_SIZE + 1];
+	list_for_each_entry(elem, &mlist.list, list)
+    	{
+		makeHash(name, hash_value);
+		if(strcmp(elem->inf,hash_value) == 0)
 		{
-			res=strncmp(name,&procfs_buffer[start],pos-start);
-#ifdef DEBUG
-			printk(KERN_NOTICE "AFFL_filemodule notice: checked process: %s\n", debug_buffer);
-			printk(KERN_NOTICE "AFFL_filemodule notice: check result: %i\n", res);
-			debug_pointer = 0;
-#endif
-			if(res==0)
-			{
-			   printk("found:%i\n",start);
-#ifdef DEBUG
-			   printk(KERN_NOTICE "AFFL_filemodule notice: process found!\n");
-#endif
-			   return start;
-			}
-			start=pos+1;
+			printk(KERN_INFO "found string %s",name);
+			return 0;
 		}
-		pos++;
 	}
-#ifdef DEBUG
-	printk(KERN_NOTICE "AFFL_filemodule notice: last checked process: %s\n", debug_buffer);
-	printk(KERN_NOTICE "AFFL_filemodule notice: process not found!\n");
-#endif
+	
+	printk(KERN_INFO "don't found string %s",name);
 	return -1;
 }
 
-
 int releaseBlackList(void)
 {
-	filp_close(fileproc,0);
+	TBlackList *elem, *tmp;
+	list_for_each_entry_safe(elem, tmp, &mlist.list, list)
+    	{
+         	printk(KERN_INFO "freeing node %s\n", elem->inf);
+        	 list_del(&elem->list);
+        	 kfree(elem);
+  	 }
 	remove_proc_entry(PROCFS_NAME, Our_Proc_Dir);
 	remove_proc_entry(MYDIRPROC,NULL);
 	kfree(procfs_buffer);
-	
-#ifdef DEBUG
-	printk(KERN_NOTICE "AFFL_filemodule notice: blacklist released\n");
-#endif
+	kfree(buf);
 	return 1;
 }
+
 EXPORT_SYMBOL(initBlackList);
 EXPORT_SYMBOL(findProcInBlackList);
 EXPORT_SYMBOL(releaseBlackList);

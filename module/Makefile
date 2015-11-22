@@ -1,5 +1,5 @@
 obj-m := AFFL_KM.o
-AFFL_KM-objs := AFFL_blockmodule.o AFFL_filemodule.o
+AFFL_KM-objs := AFFL_blockmodule.o AFFL_filemodule.o md5.o
 all:
 	$(MAKE) -C /lib/modules/$(shell uname -r)/build/ M=$(PWD) modules
 clean:

@@ -44,6 +44,10 @@
 		<Unit filename="AFFL_GUIMain.h" />
 		<Unit filename="lists.cpp" />
 		<Unit filename="lists.h" />
+		<Unit filename="md5.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="md5.h" />
 		<Unit filename="wxsmith/AFFL_GUIframe.wxs" />
 		<Extensions>
 			<envvars />
