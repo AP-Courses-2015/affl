@@ -38,11 +38,19 @@ void BlackList::init()
 
 void BlackList::addByPath(const wxString &path)
 {
-    if (m_black_list->FindString(path) == wxNOT_FOUND)
+    char hash_value[16];
+    const char *c_path = path.c_str().AsChar();
+    if (makeHash(c_path, hash_value))
     {
-        m_black_list->AppendAndEnsureVisible(path);
-        m_phys_file.AddLine(path);
-        m_procfs_file.Write(path);
+        wxMessageBox(wxT("Can't open file"), wxT("Error"),
+                     wxOK | wxCENTER | wxICON_ERROR);
+    }
+
+    if (m_black_list->FindString(hash_value) == wxNOT_FOUND)
+    {
+        m_black_list->AppendAndEnsureVisible(hash_value);
+        m_phys_file.AddLine(hash_value);
+        m_procfs_file.Write(hash_value);
         m_phys_file.Write();
     }
 }

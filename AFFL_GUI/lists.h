@@ -8,6 +8,10 @@
 #include <wx/process.h>
 #include <memory>
 
+extern "C" {
+#include "md5.h"
+}
+
 namespace
 {
     const wxString DEFAULT_PROCFS_FILE_NAME = wxT("/proc/affl/blist");
