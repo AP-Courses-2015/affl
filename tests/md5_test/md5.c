@@ -137,6 +137,7 @@ int makeHash(const char *path_to_file, char *hash_result)
 
     resultToString(A, B, C, D, hash_result);
     close(f_id);
+    f_id = -1;
 
     return 0;
 }
