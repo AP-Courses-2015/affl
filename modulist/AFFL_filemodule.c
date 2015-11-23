@@ -12,10 +12,12 @@
 #include <linux/slab.h>
 #include <linux/list.h>
 #include <linux/seq_file.h>
+#include "md5.h"
 #define MAX_STR_LEN 255
 #define PROCFS_NAME 		"blist"
 #define MYDIRPROC "affl"
 #define MYPROC "/proc/affl/blist"
+#define HASH_VALUE_SIZE 32
 
 #define DEBUG
 
@@ -35,10 +37,10 @@ typedef struct TBlackList
 	 struct list_head list; /* kernel's list structure */
 }TBlackList;
 
-TBlackList mlist;
+TBlackList mlist[2];
 
 
-char *buf;
+char *buf,*buf2;
 
 /**
  * The buffer used to store character for this module
@@ -50,37 +52,40 @@ static char* procfs_buffer;
  * This function is called then the /proc file is read
  *
  */
-int findProcAndDel(long pos)
+int findProcAndDel(long pos,TBlackList mlist)
 {
 	TBlackList *elem;
 	long counter=0;
-	list_for_each_entry(elem, &mlist.list, list)
-    	{
-		if(pos==counter)
-		{
+	
+		list_for_each_entry(elem, &mlist.list, list)
+    		{
+			if(pos==counter)
+			{
 			 printk(KERN_INFO "deleted %s", elem->inf);
 			 list_del(&elem->list);
         		 kfree(elem);
 			 return 1;
-		}
+			}
 		counter++;	
-	}
-
+		}
+	
 	return 0;
 } 
+
 
 int read_callback(struct seq_file *m, void *v)
 {
         TBlackList *elem;
-	list_for_each_entry(elem, &mlist.list, list)
+	list_for_each_entry(elem, &mlist[0].list, list)
     	{
 		
 		
-		seq_printf(m,"%s \n",elem->inf);
+		seq_printf(m,"%s\n",elem->inf);
 
 	}
         return 0;
 }
+
 
 
 /**
@@ -90,21 +95,43 @@ int read_callback(struct seq_file *m, void *v)
 
 size_t write_callback(struct file* file, const char __user* buffer, size_t count, int* pos)
 {
-	TBlackList *elem;
+	TBlackList *elem,*elem2;
 	long res;
+	
 	int i=0;
+	char hash_value[HASH_VALUE_SIZE + 1];
 	char mystr[10];
+	
 	buf=(char*) kmalloc(sizeof(char)*MAX_STR_LEN,GFP_USER);
 	
+	buf[count]='\0';
+	memcpy(buf,buffer,count);
+	elem=(TBlackList*)kmalloc(sizeof(TBlackList),GFP_KERNEL);
+	elem->inf=buf;
 	if(buffer[0]!='k')
 	{
-		buf[count]='\0';
-		memcpy(buf,buffer,count);
-		elem=(TBlackList*)kmalloc(sizeof(TBlackList),GFP_KERNEL);
-		elem->inf=buf;
-		//INIT_LIST_HEAD(&elem->list);
-		list_add_tail(&(elem->list),&(mlist.list));
-		printk(KERN_INFO "add: %s", elem->inf);
+		
+		elem2=(TBlackList*)kmalloc(sizeof(TBlackList),GFP_KERNEL);
+		list_add_tail(&(elem->list),&(mlist[0].list));
+		printk(KERN_INFO "add path: %s", elem->inf);
+		if(makeHash(elem->inf, hash_value)!=(-1))
+		{
+			elem2->inf=(char*) kmalloc(sizeof(char)*HASH_VALUE_SIZE,GFP_USER);
+			if(elem2->inf == NULL)
+			{
+			kfree(elem2);
+			return -1;
+			}
+		memcpy(elem2->inf,hash_value,(HASH_VALUE_SIZE + 1));
+		printk(KERN_INFO "add path 2: %s", elem2->inf);
+		list_add_tail(&(elem2->list),&(mlist[1].list));
+		}
+		else
+		{
+			printk(KERN_INFO "Error in makeHash \n");
+			return -1;
+		}
+		
 		
 	}
 	else
@@ -115,9 +142,10 @@ size_t write_callback(struct file* file, const char __user* buffer, size_t count
 		}
 		mystr[count-1]='\0';
 		kstrtol(mystr,10,&res);
-		if(findProcAndDel(res)==1)
+		if(findProcAndDel(res,mlist[0])==1 && findProcAndDel(res,mlist[1]) == 1)
 			printk(KERN_INFO "Element deleted");
 	}
+     
      return count; // Return number of bytes passed by the user
 }
 
@@ -156,7 +184,8 @@ int initBlackList(void)
 	{
   	   return -ENOMEM;
 	} 
-	INIT_LIST_HEAD(&mlist.list); 
+	INIT_LIST_HEAD(&mlist[0].list); 
+	INIT_LIST_HEAD(&mlist[1].list); 
 
 	return 0;
 }
@@ -166,9 +195,12 @@ int initBlackList(void)
 int findProcInBlackList(const char*name)
 {
 	TBlackList *elem;
-	list_for_each_entry(elem, &mlist.list, list)
+	char hash_value[HASH_VALUE_SIZE + 1];
+	makeHash(name, hash_value);
+	list_for_each_entry(elem, &mlist[0].list, list)
     	{
-		if(strcmp(elem->inf,name) == 0)
+		
+		if(strcmp(elem->inf,hash_value) == 0)
 		{
 			printk(KERN_INFO "found string %s",name);
 			return 0;
@@ -181,17 +213,24 @@ int findProcInBlackList(const char*name)
 
 int releaseBlackList(void)
 {
-	TBlackList *elem, *tmp;
-	list_for_each_entry_safe(elem, tmp, &mlist.list, list)
+	TBlackList *elem, *tmp,*elem1,*tmp1;
+	list_for_each_entry_safe(elem, tmp, &mlist[0].list, list)
     	{
          	printk(KERN_INFO "freeing node %s\n", elem->inf);
         	 list_del(&elem->list);
         	 kfree(elem);
   	 }
+	list_for_each_entry_safe(elem1, tmp1, &mlist[1].list, list)
+    	{
+         	printk(KERN_INFO "freeing node %s\n", elem1->inf);
+        	 list_del(&elem1->list);
+        	 kfree(elem1);
+  	 }
 	remove_proc_entry(PROCFS_NAME, Our_Proc_Dir);
 	remove_proc_entry(MYDIRPROC,NULL);
 	kfree(procfs_buffer);
 	kfree(buf);
+		
 	return 1;
 }
 
