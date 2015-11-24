@@ -24,8 +24,6 @@
 #include <linux/delay.h>
 #include "AFFL_filemodule.h"
 
-#define DEBUG
-
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("firewall");
 
@@ -272,7 +270,7 @@ asmlinkage long fakeExecve(const char __user *filename,
 #else
     printk(KERN_NOTICE "AFFL notice: process %s blocked\n", filename);
  
-    return 0;
+    return -EACCES;
 #endif
   }
   
