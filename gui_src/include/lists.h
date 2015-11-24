@@ -17,7 +17,7 @@ extern "C" {
 namespace
 {
     const wxString DEFAULT_PROCFS_FILE_NAME = wxT("/proc/affl/blist");
-    const wxString DEFAULT_PHIS_FILE_NAME = wxT("./.blacklist.lst");
+    const wxString DEFAULT_PHIS_FILE_NAME = wxT("etc/AFFL/blacklist.lst");
 
     struct ProcInfo
     {

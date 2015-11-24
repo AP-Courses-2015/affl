@@ -22,13 +22,13 @@ mkdir ~/.AFFL
 echo instaling gui
 cd gui_src
 make
-cp ./AFFL ~/.AFFL/
+cp ./AFFL /usr/local/bin
 echo cleaning
 make clean
 
 echo instaling LKM
 cd ../mod_src
 make
-cp ./AFFL_KM.ko ~/.AFFL/
+cp ./AFFL_KM.ko /usr/local/bin
 echo cleaning
 make clean
