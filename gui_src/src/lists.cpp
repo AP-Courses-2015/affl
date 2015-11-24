@@ -33,23 +33,20 @@ void BlackList::init()
     wxVector<wxString> values;
     wxString name;
     wxString hash_value;
-    wxString procfs_file_entry;
     for (wxString line = m_phys_file.GetFirstLine();
          !m_phys_file.Eof();
          line = m_phys_file.GetNextLine())
     {
-        size_t name_length;
-        if ((name_length = line.find('\0')) == wxString::npos)
+        hash_value = line.substr(0, 32);
+        name = line.substr(32);
+        if (name[0] != '/')
             continue;
 
         values.push_back(line);
-        name = line.substr(0, name_length);
-        hash_value = line.substr(name_length+1);
 
         m_black_list->AppendAndEnsureVisible(name);
 
-        procfs_file_entry = hash_value + name;
-        m_procfs_file.Write(procfs_file_entry);
+        m_procfs_file.Write(line);
     }
 
     m_phys_file.Clear();
@@ -64,21 +61,19 @@ void BlackList::addByPath(const wxString &path)
         return;
 
     char hash_value[33];
-    const char *c_path = path.c_str().AsChar();
-    if (makeHash(c_path, hash_value))
+    if (makeHash(path.c_str().AsChar(), hash_value))
     {
         wxMessageBox(wxT("Can't read file"), wxT("Error"),
                      wxOK | wxCENTER | wxICON_ERROR);
     }
 
-    wxString phys_file_entry(path + "\0" + hash_value);
-    wxString procfs_file_entry(hash_value + path);
-    if (m_black_list->FindString(hash_value) == wxNOT_FOUND)
+    wxString file_entry(hash_value + path);
+    if (!IsHashExist(hash_value))
     {
         m_black_list->AppendAndEnsureVisible(path);
-        m_phys_file.AddLine(phys_file_entry);
+        m_phys_file.AddLine(file_entry);
         m_phys_file.Write();
-        m_procfs_file.Write(procfs_file_entry);
+        m_procfs_file.Write(file_entry);
     }
 }
 
@@ -90,6 +85,19 @@ void BlackList::delSelected()
     m_phys_file.RemoveLine(m_black_list->GetSelection());
     m_black_list->removeSelected();
     m_phys_file.Write();
+}
+
+bool BlackList::IsHashExist(const wxString &hash_value)
+{
+    for (wxString line = m_phys_file.GetFirstLine();
+         !m_phys_file.Eof();
+         line = m_phys_file.GetNextLine())
+     {
+        if (line.Find(hash_value) != wxNOT_FOUND)
+            return true;
+     }
+
+     return false;
 }
 
 //=======================================================================================
@@ -148,7 +156,7 @@ void ProcList::update()
         if (!next_dir.ToLong(&id))
             continue;
 
-        ProcInfo pi = getProcInfo(dir, next_dir);
+        ProcInfo pi = getProcInfo(next_dir);
         //If we have path to binary file, then add to list
         if (!pi.path.IsEmpty())
             if (pi.path[0] == '/')
@@ -164,14 +172,15 @@ void ProcList::update()
     m_proc_list->AutoSizeColumns();
 }
 
-ProcInfo ProcList::getProcInfo(wxDir &dir, wxString &this_name)
+ProcInfo ProcList::getProcInfo(wxString &pid)
 {
     wxTextFile file;
     ProcInfo pi;
-    wxString full_dir_path(dir.GetNameWithSep() + this_name);
+    wxDir dir("/proc");
+    wxString full_dir_path(dir.GetNameWithSep() + pid);
     wxString full_file_name(full_dir_path + wxT("/comm"));
 
-    pi.id = this_name;
+    pi.id = pid;
     file.Open(full_file_name);
     pi.name = file.GetFirstLine();
     file.Close();

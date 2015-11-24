@@ -62,7 +62,7 @@ class OpenListBox : public wxListBox
 class BlackList
 {
     private:
-        std::unique_ptr<OpenListBox>m_black_list;
+        std::unique_ptr<OpenListBox> m_black_list;
         wxFile m_procfs_file;
         wxTextFile m_phys_file;
 
@@ -80,6 +80,7 @@ class BlackList
 
         void addByPath(const wxString &path);
         void delSelected();
+        bool IsHashExist(const wxString &hash_value);
 };
 
 class ProcList
@@ -108,10 +109,9 @@ class ProcList
         void update();
 
     private:
-        ProcInfo getProcInfo(wxDir &dir, wxString &this_name);
+        ProcInfo getProcInfo(wxString &pid);
         ProcInfo getSelectedProcInfo();
         void addProcInfoLine(const ProcInfo &pi);
-        void delSelectedProcInfoLine();
 };
 
 

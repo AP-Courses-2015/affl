@@ -38,9 +38,11 @@ static inline void le2be(void *src, void *dst)
 
 static void resultToString(uint32_t A, uint32_t B, uint32_t C, uint32_t D, char *res)
 {
+    int i;
     uint32_t be_A, be_B, be_C, be_D;
     le2be(&A, &be_A); le2be(&B, &be_B); le2be(&C, &be_C); le2be(&D, &be_D);
-    sprintf(res, "%x%x%x%x", be_A, be_B, be_C, be_D);
+    sprintf(res, "%8x%8x%8x%8x", be_A, be_B, be_C, be_D);
+    for (i = 0; i<MD5_HASH_SIZE; i++) if (res[i] == ' ') res[i] = '0';
 }
 
 static inline int getNextBlock(char *block)

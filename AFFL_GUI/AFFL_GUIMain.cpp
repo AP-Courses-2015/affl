@@ -152,11 +152,9 @@ AFFL_GUIFrame::~AFFL_GUIFrame()
     //*)
 }
 
-bool AFFL_GUIFrame::initKernelModule()
+void AFFL_GUIFrame::initKernelModule()
 {
     wxShell(wxT("insmod AFFL_KM.ko"));
-
-    return true;
 }
 
 void AFFL_GUIFrame::OnbtnKillClick(wxCommandEvent& event)
