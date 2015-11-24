@@ -127,8 +127,7 @@ size_t write_callback(struct file* file, const char __user* buffer, size_t count
 		
 		elem->inf=(char*) kmalloc(sizeof(char)*MAX_STR_LEN,GFP_KERNEL);
 		memcpy(elem->inf,buf,count);
-		list_add_tail(&(elem->list),&(mlist[0].list));
-		printk(KERN_INFO "add path: %s", elem->inf);
+		
 		if(makeHash(elem->inf, hash_value)!=(-1))
 		{
 			elem2->inf=(char*) kmalloc(sizeof(char)*HASH_VALUE_SIZE,GFP_KERNEL);
@@ -137,6 +136,8 @@ size_t write_callback(struct file* file, const char __user* buffer, size_t count
 			kfree(elem2);
 			return -1;
 			}
+		list_add_tail(&(elem->list),&(mlist[0].list));
+		printk(KERN_INFO "add path: %s", elem->inf);
 		hash_value[HASH_VALUE_SIZE] = '\0';
 		memcpy(elem2->inf,hash_value,(HASH_VALUE_SIZE+1));
 		printk(KERN_INFO "add hash: %s", elem2->inf);
