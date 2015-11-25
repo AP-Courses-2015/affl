@@ -17,7 +17,7 @@ fi
 echo required kernel version - 3.11 or more
 echo your kernel version - $(uname -r)
 
-mkdir ~/.AFFL
+mkdir /etc/AFFL
 
 echo instaling gui
 cd gui_src

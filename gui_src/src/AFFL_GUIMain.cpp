@@ -154,7 +154,7 @@ AFFL_GUIFrame::~AFFL_GUIFrame()
 
 void AFFL_GUIFrame::initKernelModule()
 {
-    wxShell(wxT("insmod AFFL_KM.ko"));
+    wxShell(wxT("insmod /usr/local/bin/AFFL_KM.ko"));
 }
 
 void AFFL_GUIFrame::OnbtnKillClick(wxCommandEvent& event)
@@ -201,7 +201,7 @@ void AFFL_GUIFrame::OnSetFocus(wxFocusEvent& event)
 
 void AFFL_GUIFrame::OnClose(wxCloseEvent& event)
 {
-    wxShell(wxT("rmmod AFFL_KM.ko"));
+    wxShell(wxT("rmmod AFFL_KM"));
 
     exit(0);
 }
